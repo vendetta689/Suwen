@@ -1,0 +1,1335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>光储充场站投资测算工具</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #fff;
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d8dee8;
+      --brand: #0f766e;
+      --blue: #2563eb;
+      --good: #047857;
+      --bad: #b42318;
+      --warn: #b45309;
+      --shadow: 0 10px 28px rgba(15, 23, 42, .08);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; color: var(--ink); background: var(--bg); }
+    header { padding: 22px 28px 14px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 4; }
+    h1 { margin: 0; font-size: 24px; line-height: 1.25; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    main { display: grid; grid-template-columns: minmax(350px, 460px) minmax(0, 1fr); gap: 18px; padding: 18px; max-width: 1560px; margin: 0 auto; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .inputs { padding: 16px; align-self: start; position: sticky; top: 92px; max-height: calc(100vh - 112px); overflow: auto; }
+    .section-title { margin: 14px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 700; }
+    .section-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+    label { display: grid; grid-template-columns: 1fr 118px; gap: 10px; align-items: center; margin: 9px 0; font-size: 13px; color: #344054; }
+    input, select { width: 100%; min-width: 0; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 9px; font: inherit; color: var(--ink); background: #fff; }
+    input { text-align: right; }
+    input:focus, select:focus { outline: 2px solid rgba(15, 118, 110, .22); border-color: var(--brand); }
+    .results { display: grid; gap: 18px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; }
+    .kpi { padding: 14px; background: #fff; border: 1px solid var(--line); border-radius: 8px; min-height: 96px; box-shadow: var(--shadow); }
+    .kpi .label { color: var(--muted); font-size: 13px; }
+    .kpi .value { margin-top: 8px; font-size: 26px; font-weight: 800; line-height: 1.1; }
+    .kpi .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .content { padding: 16px; overflow: auto; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 9px 8px; border-bottom: 1px solid #e6ebf2; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #475467; font-weight: 700; background: #f8fafc; }
+    .positive { color: var(--good); }
+    .negative { color: var(--bad); }
+    .muted { color: var(--muted); }
+    .warn { color: var(--warn); }
+    .mini-input { width: 86px; padding: 6px 7px; }
+    .bars { display: grid; gap: 9px; margin-top: 8px; }
+    .bar-row { display: grid; grid-template-columns: 92px 1fr 92px; gap: 10px; align-items: center; font-size: 13px; }
+    .bar-track { height: 10px; background: #eef2f7; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--brand), var(--blue)); width: 0; }
+    .formula { display: grid; gap: 10px; color: #344054; font-size: 13px; line-height: 1.65; }
+    .pill { display: inline-block; padding: 2px 7px; border-radius: 999px; background: #eef6f5; color: var(--brand); font-weight: 700; font-size: 12px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; color: var(--muted); font-size: 13px; }
+    button { border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 7px 10px; color: #344054; cursor: pointer; }
+    button:hover { border-color: var(--brand); color: var(--brand); }
+    .hidden { display: none !important; }
+    .login-screen { min-height: 100vh; display: grid; place-items: center; padding: 18px; }
+    .login-box { width: min(420px, 100%); padding: 24px; }
+    .login-box h1 { font-size: 22px; margin-bottom: 8px; }
+    .login-box label { grid-template-columns: 1fr; gap: 6px; }
+    .login-box input { text-align: left; }
+    .primary-btn { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .primary-btn:hover { color: #fff; background: #0b5f59; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .account-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; align-items: end; margin-bottom: 12px; }
+    .account-form label { display: block; margin: 0; }
+    .account-form input { margin-top: 6px; text-align: left; }
+    .error { color: var(--bad); min-height: 20px; font-size: 13px; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } .inputs { position: static; max-height: none; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { header { padding: 18px 14px 12px; } main { padding: 12px; } .kpis { grid-template-columns: 1fr; } label { grid-template-columns: 1fr; gap: 5px; } th, td { font-size: 12px; padding: 8px 6px; } .bar-row { grid-template-columns: 76px 1fr 76px; } .account-form { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <section id="loginView" class="login-screen">
+    <div class="panel login-box">
+      <h1>登录测算工具</h1>
+      <div class="subtitle">请输入账户名和密码后继续</div>
+      <label>账户名<input id="loginUsername" type="text" autocomplete="username" value="admin"></label>
+      <label>密码<input id="loginPassword" type="password" autocomplete="current-password" value=""></label>
+      <div id="loginError" class="error"></div>
+      <button id="loginBtn" class="primary-btn" type="button">登录</button>
+    </div>
+  </section>
+
+  <div id="appShell" class="hidden">
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>光储充场站投资测算工具</h1>
+        <div class="subtitle">支持峰平谷电价、两充两放储能、成本拆解、敏感性测算和利用率展示</div>
+      </div>
+      <div class="top-actions">
+        <span id="currentUser" class="muted"></span>
+        <button id="exportScreenshotBtn" type="button">导出截图</button>
+        <button id="accountToggleBtn" type="button">账户管理</button>
+        <button id="logoutBtn" type="button">退出登录</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="panel inputs">
+      <div class="section-title">场地配置</div>
+      <label>拟租赁场站规模（㎡）<input data-key="siteArea" type="number" value="6700" step="100"></label>
+      <label>变压器功率（kVA）<input data-key="transformerKva" type="number" value="4800" step="100"></label>
+      <label>快充枪数（枪）<input data-key="fastGuns" type="number" value="68" step="1"></label>
+      <label>慢充枪数（枪）<input data-key="slowGuns" type="number" value="0" step="1"></label>
+      <label>光伏面积（㎡）<input data-key="pvArea" type="number" value="2977" step="10"></label>
+      <label>光伏功率（kW）<input data-key="pvKw" type="number" value="600" step="10"></label>
+      <label>单台储能容量（kWh）<input data-key="batteryKwh" type="number" value="261" step="1"></label>
+      <label>储能台数（台）<input data-key="batteryUnits" type="number" value="18" step="1"></label>
+      <label>休息区面积（㎡）<input data-key="loungeArea" type="number" value="200" step="10"></label>
+      <label>外线工程成本（万元）<input data-key="externalLineCost" type="number" value="120" step="1"></label>
+      <label>其他成本（万元）<input data-key="otherCost" type="number" value="0" step="1"></label>
+
+      <div class="section-title">市场边界条件</div>
+      <label>省份计算逻辑
+        <select data-key="province">
+          <option value="jiangsu" selected>江苏</option>
+          <option value="zhejiang">浙江</option>
+          <option value="chongqing">重庆</option>
+          <option value="guangdong">广东</option>
+          <option value="sichuan">四川</option>
+          <option value="anhui">安徽</option>
+          <option value="hunan">湖南</option>
+          <option value="shanghai">上海</option>
+        </select>
+      </label>
+      <label>单枪日充电量（kWh/枪/日）<input data-key="singleGunDailyKwh" type="number" value="250" step="10"></label>
+      <label>服务费（元/kWh）<input data-key="serviceFee" type="number" value="0.75" step="0.01"></label>
+      <label>品牌收入（万元/年）<input data-key="brandIncome" type="number" value="20" step="1"></label>
+      <label>车生活收入（万元/年）<input data-key="carLifeIncome" type="number" value="0" step="1"></label>
+      <label>上网电价（元/kWh）<input data-key="feedInTariff" type="number" value="0.34" step="0.01"></label>
+
+      <div class="section-title">成本模块</div>
+      <label>土地首年成本（万元）<input data-key="firstLandCost" type="number" value="0" step="1"></label>
+      <label>土地每隔几年上涨<input data-key="landIncreaseYears" type="number" value="3" step="1"></label>
+      <label>每次上涨比例（%）<input data-key="landIncreaseRate" type="number" value="5" step="0.5"></label>
+
+      <div class="section-title">电站运营成本（黄色可调）</div>
+      <label>照明数量<input data-key="lightingCount" type="number" value="1" step="1"></label>
+      <label>网络数量<input data-key="networkCount" type="number" value="1" step="1"></label>
+      <label>道闸数量<input data-key="barrierCount" type="number" value="1" step="1"></label>
+      <label>店长人数<input data-key="storeManagerCount" type="number" value="0" step="1"></label>
+      <label>卫生人数<input data-key="cleaningCount" type="number" value="1" step="1"></label>
+      <label>管理员（日）人数<input data-key="dayManagerCount" type="number" value="0" step="1"></label>
+      <label>管理员（夜）人数<input data-key="nightManagerCount" type="number" value="0" step="1"></label>
+      <label>化粪池清污次数<input data-key="septicCleanCount" type="number" value="0" step="1"></label>
+      <label>零星维修项<input data-key="contingencyCount" type="number" value="1" step="1"></label>
+      <label>互联互通比例<input data-key="interconnectRate" type="number" value="0" step="0.01"></label>
+      <label>互联互通单价<input data-key="interconnectUnitFee" type="number" value="0.15" step="0.01"></label>
+
+      <div class="section-title">峰平谷电价</div>
+      <label>尖峰电价（元/kWh）<input data-key="sharpPrice" type="number" value="0" step="0.01"></label>
+      <label>峰电价（元/kWh）<input data-key="peakPrice" type="number" value="0.99418" step="0.01"></label>
+      <label>平电价（元/kWh）<input data-key="flatPrice" type="number" value="0.6473" step="0.01"></label>
+      <label>谷电价（元/kWh）<input data-key="valleyPrice" type="number" value="0.36546" step="0.01"></label>
+      <label>深谷电价（元/kWh）<input data-key="deepValleyPrice" type="number" value="0" step="0.01"></label>
+    </aside>
+
+    <section class="results">
+      <div id="accountPanel" class="panel content hidden">
+        <h2>账户管理</h2>
+        <div class="account-form">
+          <label>账户名<input id="newAccountName" type="text"></label>
+          <label>密码<input id="newAccountPassword" type="password"></label>
+          <label>权限省份
+            <select id="newAccountProvince">
+              <option value="">管理员</option>
+              <option value="jiangsu">江苏</option>
+              <option value="zhejiang">浙江</option>
+              <option value="chongqing">重庆</option>
+              <option value="guangdong">广东</option>
+              <option value="sichuan">四川</option>
+              <option value="anhui">安徽</option>
+              <option value="hunan">湖南</option>
+              <option value="shanghai">上海</option>
+            </select>
+          </label>
+          <button id="addAccountBtn" class="primary-btn" type="button">新增账户</button>
+        </div>
+        <table><thead><tr><th>账户名</th><th>权限省份</th><th>状态</th><th>新密码</th><th>操作</th></tr></thead><tbody id="accountRows"></tbody></table>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="label">建设总成本</div><div id="totalCost" class="value"></div><div class="note">万元，含基础、供电、光储充、休息区</div></div>
+        <div class="kpi"><div class="label">首年净现金流</div><div id="cashflowYear1" class="value"></div><div class="note">含服务费、品牌收入、租金、电费差额</div></div>
+        <div class="kpi"><div class="label">静态回本周期</div><div id="payback" class="value"></div><div class="note">按年度现金流累计插值</div></div>
+        <div class="kpi"><div class="label">首年光储增效</div><div id="energyGain" class="value"></div><div class="note">光伏增效 + 当前储能模式增效</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel content">
+          <h2>成本拆解</h2>
+          <table><thead><tr><th>项目</th><th>金额（万元）</th><th>逻辑</th></tr></thead><tbody id="costRows"></tbody></table>
+        </div>
+        <div class="panel content">
+          <h2>首年收益拆解</h2>
+          <table><thead><tr><th>项目</th><th>金额（万元）</th><th>说明</th></tr></thead><tbody id="profitRows"></tbody></table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel content">
+          <h2>储能策略对照</h2>
+          <table><thead><tr><th>模式</th><th>首年增效</th><th>转移电量</th><th>循环率</th><th>说明</th></tr></thead><tbody id="storageCompareRows"></tbody></table>
+          <h2 style="margin-top:18px;">敏感性测算</h2>
+          <table><thead><tr><th>变量</th><th>变化</th><th>回本周期</th><th>首年净现金流</th></tr></thead><tbody id="sensitivityRows"></tbody></table>
+        </div>
+        <div class="panel content">
+          <h2>电站运营成本</h2>
+          <table><thead><tr><th>项目</th><th>金额（万元/年）</th><th>Excel口径</th></tr></thead><tbody id="opRows"></tbody></table>
+        </div>
+      </div>
+
+      <div class="panel content">
+        <h2>光伏与储能增效</h2>
+        <div class="grid-2">
+          <table><thead><tr><th>指标</th><th>首年</th><th>30年累计</th></tr></thead><tbody id="energyRows"></tbody></table>
+          <div><div class="muted" style="font-size:13px;margin-bottom:8px;">年度现金流贡献</div><div id="bars" class="bars"></div></div>
+        </div>
+      </div>
+
+      <div class="panel content">
+        <h2>光伏储能利用率</h2>
+        <table>
+          <thead><tr><th>指标</th><th>首年</th><th>30年平均</th><th>说明</th></tr></thead>
+          <tbody id="utilizationRows"></tbody>
+        </table>
+      </div>
+
+      <div class="panel content">
+        <h2>计算拆解</h2>
+        <div class="formula">
+          <div><span class="pill">省份逻辑</span> 江苏、浙江、重庆、广东分别采用对应测算表的24小时峰平谷时段和默认电价；切换省份会自动带入默认电价，仍可手动覆盖。</div>
+          <div><span class="pill">用电曲线</span> 充电量沿用当前测算表拆解出的24小时默认负荷曲线，并按月天数分摊到全年。</div>
+          <div><span class="pill">两充两放优化</span> 自动识别当前省份的连续谷/深谷时段作为充电窗口，后续非谷时段按电价从高到低放电；最多执行两轮，并受储能容量、功率、效率和实际负荷约束。</div>
+          <div><span class="pill">Excel规则储能</span> 作为对照口径：按当前省份所有谷段集中充电，并按高价小时优先放电。</div>
+          <div><span class="pill">成本</span> 土地成本按首年成本、上涨周期和上涨比例逐年递增；年度运维成本按一个统一输入值等效应用到各年。</div>
+          <div><span class="pill">敏感性</span> 当前展示单枪日充电量、服务费、储能台数、峰谷价差、土地首年成本变化后，对回本周期和首年净现金流的影响。</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script>
+    const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => `${i}-${i + 1}`);
+    const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const UPDATED_TEMPLATE_HOUR_SHARES = [3.87800699798887,2.33805819795339,1.43500949431578,0.5852590429004519,1.40504285571973,0.9539795291100991,2.27043701389487,4.513686000589489,3.7627320054852103,3.8854581621803197,4.78673752582598,6.7730334891827,5.6452848366379005,5.06176398337743,6.502922557172271,5.576037604206499,5.2870246386201,4.62767759859196,5.68948718608467,7.5085369097094,5.37556016899191,4.77341140525281,3.81866557748423,3.5461872187240098];
+    const UPDATED_TEMPLATE_PV_FACTORS = [1,0.986,0.982,0.978,0.974,0.97,0.966,0.962,0.958,0.954];
+    const PROVINCE_CONFIGS = {
+      jiangsu: {
+        name: "江苏",
+        sunHours: 1246.6,
+        pvUnit: 0.191,
+        baseFastGuns: 68,
+        baseSingleGunDailyKwh: 250,
+        priceTypes: ["flat", "flat", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "valley", "valley", "valley", "valley", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat"],
+        hourShares: [3.87800699798887, 2.33805819795339, 1.43500949431578, 0.585259042900452, 1.40504285571973, 0.953979529110099, 2.27043701389487, 4.51368600058949, 3.76273200548521, 3.88545816218032, 4.78673752582598, 6.77301697256495, 5.64534525510593, 5.06179616696336, 6.50292489423496, 5.57602066705681, 5.28701271454066, 4.6277488732794, 5.68953500066699, 7.50853883983995, 5.37563491585895, 4.77339324346432, 3.81868333705712, 3.54621430460053],
+        storageGainCurve: [7.44947083768704,14.898941675374,22.348412513061,29.7978833507479,37.2473541884349,44.6968250261219,52.1462958638089,59.5957667014958,66.6318672924958,73.0385797309073,78.618777323475,83.9151195664847,89.1605237572794,94.4059279480742,99.6513321388691,104.896736329664,110.142140520459,115.387544711253,120.632948902048,125.878353092843,131.123757283638,136.369161474433,141.614565665227,146.859969856022,152.105374046817,157.350778237612,162.596182428407,167.545677774948,171.660060055846,174.469147012961],
+        prices: { sharpPrice: 0, peakPrice: 0.99418, flatPrice: 0.6473, valleyPrice: 0.36546, deepValleyPrice: 0 }
+      },
+      zhejiang: {
+        name: "浙江",
+        sunHours: 1275.85,
+        pvUnit: 0.191,
+        baseFastGuns: 64,
+        baseSingleGunDailyKwh: 280,
+        priceTypes: ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "peak", "peak", "peak", "valley", "valley", "peak", "peak", "peak", "peak", "flat", "flat", "flat", "flat", "flat", "flat", "valley"],
+        hourShares: [3.75462966151529, 1.64178546444528, 1.02133784878041, 1.95215685734329, 1.05810292844846, 1.48691953563835, 3.98505914389511, 4.94267304102963, 5.00501953206351, 3.45271981237674, 4.84264316325302, 6.05639095134652, 6.97631771251069, 3.17806405546711, 2.7621791706581, 2.87428182482682, 4.06334985632695, 6.54340442971141, 7.91764314907965, 6.98611870341663, 4.17487750192123, 5.83105319819637, 6.24595169645342, 3.24731832957929],
+        storageGainCurve: [10.7117020536229,21.4234041072459,32.1351061608688,42.8468082144917,53.5147180568766,63.8538615567609,74.0017362711645,84.1457704251388,93.5932809021207,100.231588301238,104.41051456494,108.20517962636,111.99984468778,115.794509749199,119.589174810619,123.383839872039,127.178504933459,130.973169994879,134.767835056298,138.562500117718,142.357165179138,146.151830240558,149.946495301978,153.741160363398,157.535825424817,161.330490486237,165.125155547657,168.919820609077,172.714485670497,176.509150731917],
+        prices: { sharpPrice: 0.94695, peakPrice: 0.852255, flatPrice: 0.6313, valleyPrice: 0.25252, deepValleyPrice: 0.12626 }
+      },
+      chongqing: {
+        name: "重庆",
+        sunHours: 1002,
+        pvUnit: 0.191,
+        baseFastGuns: 42,
+        baseSingleGunDailyKwh: 250,
+        priceTypes: ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat", "flat", "peak", "peak", "flat", "flat"],
+        hourShares: [9.84537373482936, 2.15315617833875, 1.35995191781368, 1.32496476504459, 1.10034319098973, 3.01943365914436, 5.31006226460361, 4.47552931472014, 4.19450822931365, 4.87729016155736, 4.93219732989988, 3.47269753486281, 3.75236102517443, 4.17804106179714, 4.72810681089265, 3.48002304612965, 5.08322394170703, 6.06052685233879, 6.62133242580685, 5.70027012701453, 4.01119917043006, 4.14705350758095, 3.04749409093146, 3.12485088223951],
+        storageGainCurve: [8.94161515170578,17.8832303034117,26.8248454551176,35.4365758586471,41.354140014389,47.2269647405576,53.0997894667262,58.9726141928948,64.8454389190633,70.718263645232,76.5910883714005,80.6232430915954,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167,80.9652268510167],
+        prices: { sharpPrice: 1.153952, peakPrice: 0.97216, flatPrice: 0.6313, valleyPrice: 0.279078, deepValleyPrice: 0 }
+      },
+      guangdong: {
+        name: "广东",
+        sunHours: 1288,
+        pvUnit: 0.191,
+        baseFastGuns: 58,
+        baseSingleGunDailyKwh: 300,
+        priceTypes: ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "flat", "flat", "flat", "flat", "flat"],
+        hourShares: [6.71734365444037, 3.0558544661931, 2.41932854431025, 2.8054197739238, 2.42515565291122, 2.50778299390542, 5.16773684632647, 4.51351780511909, 4.70716117927302, 3.76909980452016, 3.32746293710909, 3.88241754148643, 8.36019724536718, 4.9950336365476, 4.10271861134343, 4.47706197710181, 3.75176469849108, 4.73507765052304, 3.88896521614421, 4.97453855690522, 4.54696969319732, 4.12396817791603, 3.26303199688011, 3.48229339707301],
+        storageGainCurve: [12.2768497804214,24.5536995608428,36.3595639731015,47.992051832695,58.0146374273357,66.0054630218226,73.4832862592568,80.9509977354254,88.4187092115939,95.8864206877627,103.354132163931,110.8218436401,118.289555116268,125.757266592437,132.384191130257,136.05521318415,136.741153753337,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859,136.880460176859],
+        prices: { sharpPrice: 1.43633125, peakPrice: 1.15459875, flatPrice: 0.69056875, valleyPrice: 0.27957075, deepValleyPrice: 0 }
+      },
+      sichuan: {
+        name: "四川",
+        sunHours: 1075,
+        pvUnit: 0.191,
+        baseFastGuns: 56,
+        baseSingleGunDailyKwh: 300,
+        priceTypes: ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "valley", "valley"],
+        priceTypesByMonth: [
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat"],
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat"],
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "valley", "valley"],
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "valley", "valley"],
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "valley", "valley"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "sharp", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "sharp", "sharp", "flat"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "sharp", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "sharp", "sharp", "flat"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "sharp", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "sharp", "sharp", "flat"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "peak", "peak", "flat"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "peak", "peak", "flat"],
+          ["flat", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat", "peak", "peak", "peak", "flat"],
+          ["valley", "valley", "valley", "valley", "valley", "valley", "valley", "valley", "flat", "flat", "peak", "peak", "flat", "flat", "flat", "flat", "peak", "peak", "peak", "peak", "peak", "peak", "flat", "flat"]
+        ],
+        hourShares: [6.85746269722427,3.03915778863406,2.3907721117575,2.21848977167993,2.58024793239076,3.70223469751796,5.70779954663806,4.8249291693053,4.51980649783398,3.8852274196396,4.05881775327653,3.61669697378314,5.8514766362652,5.08206680169542,3.77475567375381,3.33338683258681,4.4389889247699,3.33131426308212,3.66231245931477,3.86697237909369,3.68327195031192,4.76566505532813,4.35275613199387,6.45539053212338],
+        storageGainCurve: [9.0607900117983,18.1215800235964,27.1823700353947,36.0403661463932,44.8057963403268,52.0591475502453,58.8537045739179,65.4246136455613,71.9955227172048,78.3827981101443,84.5386427815967,91.9972576544166,100.149597841573,108.301938028729,113.131001919381,115.447798942301,116.939943490525,118.432088038749,119.924232586974,120.677947447042,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586,120.97591845586],
+        prices: { sharpPrice: 1.22000467, peakPrice: 1.03262035, flatPrice: 0.68127475, valleyPrice: 0.32992915, deepValleyPrice: 0 }
+      },
+      anhui: {
+        name: "\u5b89\u5fbd",
+        sunHours: 1300.4,
+        pvUnit: 0.191,
+        baseFastGuns: 68,
+        baseSingleGunDailyKwh: 250,
+        priceTypes: ["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","peak","peak","peak","peak","sharp","peak","peak","peak","valley"],
+        priceTypesByMonth: [["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","peak","peak","peak","peak","sharp","peak","peak","peak","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["flat","flat","valley","valley","valley","valley","valley","valley","valley","flat","flat","valley","valley","flat","flat","flat","peak","peak","peak","peak","sharp","peak","peak","peak"],["flat","flat","valley","valley","valley","valley","valley","valley","valley","flat","flat","valley","valley","flat","flat","flat","peak","peak","peak","peak","sharp","peak","peak","peak"],["flat","flat","valley","valley","valley","valley","valley","valley","valley","flat","flat","valley","valley","flat","flat","flat","peak","peak","peak","peak","sharp","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","peak","peak","flat","flat","flat","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","flat","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","peak","peak","peak","peak","sharp","peak","peak","peak","valley"]],
+        hourShares: UPDATED_TEMPLATE_HOUR_SHARES,
+        fixedOpCost: 40.3013600627706,
+        batteryReplacementEveryYears: 5,
+        pvSavingPrice: 0.584446205632933,
+        pvYearFactors: UPDATED_TEMPLATE_PV_FACTORS,
+        storageYearFactors: [1,0.998594471709,0.986208695488,0.973497449866,0.961759556992,0.950021664118,0.938283771245,0.926545878371,0.914807985497,0.903070092623],
+        storageGainCurve: [10.7316732082915,21.463346416583,32.1950196248744,42.884282900512,52.4551575814643,60.4320748992814,68.0429403106457,75.6538057220101,83.2646711333745,90.8755365447388,98.4005698497335,105.766252373698,112.581318706348,119.011626877485,125.323073768843,131.531528288707,137.739982808572,143.705061695517,149.501433394183,155.297805092849,161.094176791514,166.89054849018,172.686920188846,178.483291887512,183.879436920595,188.39240363777,192.592690534857,196.046311357303,198.460574137484,200.752007870951],
+        seasonalPricesByMonth: [{sharpPrice:1.216113656,peakPrice:1.03525638,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:1.216113656,peakPrice:1.03525638,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:1.216113656,peakPrice:1.03525638,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:1.216113656,peakPrice:1.03525638,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.9847184,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0},{sharpPrice:1.216113656,peakPrice:1.03525638,flatPrice:0.62163,valleyPrice:0.31840212,deepValleyPrice:0}],
+        prices: { sharpPrice: 0, peakPrice: 0.9847184, flatPrice: 0.62163, valleyPrice: 0.31840212, deepValleyPrice: 0 }
+      },
+      hunan: {
+        name: "\u6e56\u5357",
+        sunHours: 1156.3,
+        pvUnit: 0.191,
+        baseFastGuns: 68,
+        baseSingleGunDailyKwh: 250,
+        priceTypes: ["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","sharp","sharp","sharp","sharp","peak","peak"],
+        priceTypesByMonth: [["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","sharp","sharp","sharp","sharp","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","sharp","sharp","sharp","sharp"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","sharp","sharp","sharp","sharp"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","peak"],["valley","valley","valley","valley","valley","valley","flat","flat","flat","flat","flat","flat","valley","valley","flat","flat","peak","peak","sharp","sharp","sharp","sharp","peak","peak"]],
+        hourShares: UPDATED_TEMPLATE_HOUR_SHARES,
+        fixedOpCost: 40.7830939817638,
+        pvSavingPrice: 0.714652625600838,
+        pvYearFactors: UPDATED_TEMPLATE_PV_FACTORS,
+        storageYearFactors: [1,0.997715818833,0.984708322821,0.972356318523,0.960004314225,0.94655538395,0.931017073521,0.915988403929,0.901951014522,0.887913625115],
+        storageGainCurve: [10.1163137808859,20.232627561772,30.3489413426577,40.4652551235438,50.5815689044298,60.6978826853156,70.8141964662016,80.9305102470875,91.0468240279733,101.163137808859,111.279451589745,121.395765370631,131.512079151517,141.392347632458,150.979067625925,160.009185441371,168.452929249362,176.081602034281,182.752637041352,189.339700216418,195.774703226123,202.209706235829,208.644709245534,215.079712255239,221.514715264945,227.94971827465,234.384721284355,240.819724294061,247.254727303766,253.530019190408],
+        prices: { sharpPrice: 1.31882124, peakPrice: 1.1158862, flatPrice: 0.735383, valleyPrice: 0.3548798, deepValleyPrice: 0 }
+      },
+      shanghai: {
+        name: "\u4e0a\u6d77",
+        sunHours: 1271,
+        pvUnit: 0.191,
+        baseFastGuns: 68,
+        baseSingleGunDailyKwh: 250,
+        priceTypes: ["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","sharp","sharp","sharp","sharp","flat","valley","valley"],
+        priceTypesByMonth: [["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","sharp","sharp","sharp","sharp","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","peak","sharp","sharp","peak","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","peak","sharp","sharp","peak","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","peak","peak","peak","peak","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","flat","peak","peak","peak","flat","valley","valley"],["valley","valley","valley","valley","valley","valley","flat","flat","peak","peak","peak","flat","flat","flat","flat","flat","flat","sharp","sharp","sharp","sharp","flat","valley","valley"]],
+        hourShares: UPDATED_TEMPLATE_HOUR_SHARES,
+        fixedOpCost: 27.6046651205268,
+        pvSavingPrice: 0.922140079295966,
+        pvYearFactors: UPDATED_TEMPLATE_PV_FACTORS,
+        storageYearFactors: [1,1.079425799103,1.068580837429,1.062365539847,1.056150242265,1.049934944683,1.043719647102,1.03750434952,1.031289051938,1.025073754356],
+        storageGainCurve: [9.55363962518595,19.107279250372,28.6609188755582,38.2145585007443,47.7681981259304,57.0578459832361,63.6219919019873,69.5886197559768,74.2429972873488,79.0207389525137,83.9379615371639,88.855184121814,93.7724067064642,98.7292689336299,101.973237123172,104.691387160668,107.297225658424,109.432531956306,110.649273742888,111.097421230553,111.535095785688,111.972770340822,112.410444895957,112.848119451092,113.285794006227,113.723468561362,114.161143116496,114.565601852617,114.565601852617,114.565601852617],
+        seasonalPricesByMonth: [{sharpPrice:1.36339,peakPrice:1.102975,flatPrice:0.640015,valleyPrice:0.292795,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:1.36339,peakPrice:1.102975,flatPrice:0.640015,valleyPrice:0.292795,deepValleyPrice:0},{sharpPrice:1.36339,peakPrice:1.102975,flatPrice:0.640015,valleyPrice:0.292795,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:0,peakPrice:0.987235,flatPrice:0.640015,valleyPrice:0.350665,deepValleyPrice:0},{sharpPrice:1.36339,peakPrice:1.102975,flatPrice:0.640015,valleyPrice:0.292795,deepValleyPrice:0}],
+        prices: { sharpPrice: 0, peakPrice: 0.987235, flatPrice: 0.640015, valleyPrice: 0.350665, deepValleyPrice: 0 }
+      }
+    };
+    const PV_MONTH_WEIGHT = [.0497683694, .0527012311, .0781633036, .0891474238, .1231435552, .1058333845, .1255157594, .1291259529, .0956810454, .0430122315, .0593580115, .0485497317];
+    const PV_HOUR_SHAPE = [.0000194435, .000027938, .000031695, .0000188438, .0000285959, .001563837, .0118460073, .0351847335, .0684612876, .1029528026, .1315984284, .1404840826, .1397480541, .1277466904, .1037191231, .0721382232, .0392395288, .0226354176, .0022672317, .0000968744, .000087241, .000049747, .000033253, .0000209206];
+    const YEARS = 30;
+    const MODEL_DEFAULTS = {
+      civilUnit: 0.0465,
+      transformerUnit: 0.045,
+      pvUnit: 0.49,
+      steelUnit: 0.0566,
+      batteryUnit: 0.068,
+      gunUnit: 1.9,
+      loungeUnit: 0.55,
+      gridConnection: 0,
+      chargeLoss: 0.92,
+      pvUtilization: 0.8,
+      storageMode: "auto",
+      storageSoc: 0.9,
+      storageEfficiency: 0.9,
+      storageCycles: 2,
+      batteryPowerKw: 125,
+      lightingCount: 1,
+      networkCount: 1,
+      barrierCount: 1,
+      storeManagerCount: 0,
+      cleaningCount: 1,
+      dayManagerCount: 0,
+      nightManagerCount: 0,
+      septicCleanCount: 0,
+      contingencyCount: 1,
+      interconnectRate: 0,
+      interconnectUnitFee: 0.15
+    };
+    const ACCOUNT_STORAGE_KEY = "ev-calc-accounts";
+    const SESSION_STORAGE_KEY = "ev-calc-current-user";
+    const PROVINCE_NAMES = {
+      jiangsu: "江苏",
+      zhejiang: "浙江",
+      chongqing: "重庆",
+      guangdong: "广东",
+      sichuan: "四川",
+      anhui: "安徽",
+      hunan: "湖南",
+      shanghai: "上海"
+    };
+    const DEFAULT_ACCOUNTS = [
+      { username: "admin", password: "admin123", province: "", enabled: true, role: "admin" },
+      { username: "jiangsu", password: "js123", province: "jiangsu", enabled: true, role: "province" },
+      { username: "zhejiang", password: "zj123", province: "zhejiang", enabled: true, role: "province" },
+      { username: "chongqing", password: "cq123", province: "chongqing", enabled: true, role: "province" },
+      { username: "guangdong", password: "gd123", province: "guangdong", enabled: true, role: "province" },
+      { username: "sichuan", password: "sc123", province: "sichuan", enabled: true, role: "province" },
+      { username: "anhui", password: "ah123", province: "anhui", enabled: true, role: "province" },
+      { username: "hunan", password: "hn123", province: "hunan", enabled: true, role: "province" },
+      { username: "shanghai", password: "sh123", province: "shanghai", enabled: true, role: "province" }
+    ];
+    const fmt = (n, d = 1) => Number.isFinite(n) ? n.toLocaleString("zh-CN", { minimumFractionDigits: d, maximumFractionDigits: d }) : "-";
+    const wan = n => `${fmt(n, 1)}`;
+    const yuanToWan = n => n / 10000;
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const provinceConfig = x => PROVINCE_CONFIGS[x.province] || PROVINCE_CONFIGS.jiangsu;
+
+    function getInputs() {
+      const inputs = Object.fromEntries([...document.querySelectorAll("input[data-key]")].map(input => [input.dataset.key, Number(input.value) || 0]));
+      const selects = Object.fromEntries([...document.querySelectorAll("select[data-key]")].map(select => [select.dataset.key, select.value]));
+      return { ...MODEL_DEFAULTS, ...inputs, ...selects };
+    }
+
+    function normalizeAccounts(accounts = []) {
+      const byName = new Map();
+      DEFAULT_ACCOUNTS.forEach(account => byName.set(account.username, { ...account }));
+      accounts.forEach(account => {
+        if (!account?.username) return;
+        const fallback = byName.get(account.username) || {};
+        const province = account.province ?? fallback.province ?? "";
+        byName.set(account.username, {
+          ...fallback,
+          ...account,
+          province,
+          role: account.role || (province ? "province" : "admin"),
+          enabled: account.enabled !== false
+        });
+      });
+      return [...byName.values()];
+    }
+
+    function loadAccounts() {
+      const raw = localStorage.getItem(ACCOUNT_STORAGE_KEY);
+      if (raw) {
+        try {
+          const accounts = normalizeAccounts(JSON.parse(raw));
+          if (Array.isArray(accounts) && accounts.length) {
+            localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+            return accounts;
+          }
+        } catch (error) {}
+      }
+      const initial = normalizeAccounts(DEFAULT_ACCOUNTS);
+      localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(initial));
+      return initial;
+    }
+
+    function saveAccounts(accounts) {
+      localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+    }
+
+    function currentUser() {
+      return sessionStorage.getItem(SESSION_STORAGE_KEY);
+    }
+
+    function currentAccount() {
+      const username = currentUser();
+      return loadAccounts().find(account => account.username === username) || null;
+    }
+
+    function isAdminAccount(account = currentAccount()) {
+      return account?.role === "admin" && !account.province;
+    }
+
+    function enforceAccountProvince() {
+      const account = currentAccount();
+      const provinceSelect = document.querySelector('select[data-key="province"]');
+      if (!provinceSelect) return;
+      if (account?.province) {
+        const changed = provinceSelect.value !== account.province;
+        provinceSelect.value = account.province;
+        if (changed) applyProvinceDefaults();
+        provinceSelect.disabled = true;
+      } else {
+        provinceSelect.disabled = false;
+      }
+    }
+
+    function setAuthVisible(isLoggedIn) {
+      document.getElementById("loginView").classList.toggle("hidden", isLoggedIn);
+      document.getElementById("appShell").classList.toggle("hidden", !isLoggedIn);
+      const account = currentAccount();
+      const provinceText = account?.province ? `（${PROVINCE_NAMES[account.province]}）` : "（管理员）";
+      document.getElementById("currentUser").textContent = isLoggedIn ? `当前账户：${currentUser()}${provinceText}` : "";
+      document.getElementById("accountToggleBtn").classList.toggle("hidden", !(isLoggedIn && isAdminAccount(account)));
+      if (isLoggedIn) {
+        enforceAccountProvince();
+        renderAccounts();
+        render();
+      }
+    }
+
+    function login() {
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const matched = loadAccounts().find(account => account.username === username && account.password === password);
+      if (!matched) {
+        document.getElementById("loginError").textContent = "账户名或密码错误";
+        return;
+      }
+      if (matched.enabled === false) {
+        document.getElementById("loginError").textContent = "该账号已停用，请联系管理员";
+        return;
+      }
+      document.getElementById("loginError").textContent = "";
+      sessionStorage.setItem(SESSION_STORAGE_KEY, username);
+      setAuthVisible(true);
+    }
+
+    function logout() {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      document.getElementById("loginPassword").value = "";
+      document.getElementById("accountPanel").classList.add("hidden");
+      const provinceSelect = document.querySelector('select[data-key="province"]');
+      if (provinceSelect) provinceSelect.disabled = false;
+      setAuthVisible(false);
+    }
+
+    function renderAccounts() {
+      const activeUser = currentUser();
+      const accounts = loadAccounts();
+      document.getElementById("accountRows").innerHTML = accounts.map(account => `
+        <tr>
+          <td>${account.username}</td>
+          <td>${account.province ? PROVINCE_NAMES[account.province] : "管理员"}</td>
+          <td>${account.enabled === false ? "停用" : "启用"}</td>
+          <td><input class="mini-input account-password" type="password" data-username="${account.username}" placeholder="输入新密码"></td>
+          <td>
+            <button type="button" data-action="update" data-username="${account.username}">改密</button>
+            <button type="button" data-action="toggle" data-username="${account.username}" ${account.username === activeUser ? "disabled" : ""}>${account.enabled === false ? "启用" : "停用"}</button>
+            <button type="button" data-action="delete" data-username="${account.username}" ${accounts.length === 1 || account.username === activeUser ? "disabled" : ""}>删除</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function addAccount() {
+      const username = document.getElementById("newAccountName").value.trim();
+      const password = document.getElementById("newAccountPassword").value;
+      const province = document.getElementById("newAccountProvince").value;
+      if (!username || !password) {
+        alert("请输入账户名和密码");
+        return;
+      }
+      const accounts = loadAccounts();
+      if (accounts.some(account => account.username === username)) {
+        alert("账户名已存在");
+        return;
+      }
+      accounts.push({ username, password, province, enabled: true, role: province ? "province" : "admin" });
+      saveAccounts(accounts);
+      document.getElementById("newAccountName").value = "";
+      document.getElementById("newAccountPassword").value = "";
+      document.getElementById("newAccountProvince").value = "";
+      renderAccounts();
+    }
+
+    function handleAccountAction(event) {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const username = button.dataset.username;
+      const action = button.dataset.action;
+      let accounts = loadAccounts();
+      if (action === "update") {
+        const input = [...document.querySelectorAll(".account-password")].find(item => item.dataset.username === username);
+        const password = input ? input.value : "";
+        if (!password) {
+          alert("请输入新密码");
+          return;
+        }
+        accounts = accounts.map(account => account.username === username ? { ...account, password } : account);
+        saveAccounts(accounts);
+        renderAccounts();
+        alert("密码已更新");
+      }
+      if (action === "toggle") {
+        accounts = accounts.map(account => account.username === username ? { ...account, enabled: account.enabled === false } : account);
+        saveAccounts(accounts);
+        renderAccounts();
+      }
+      if (action === "delete") {
+        if (!confirm(`确认删除账户 ${username}？`)) return;
+        accounts = accounts.filter(account => account.username !== username);
+        saveAccounts(accounts);
+        renderAccounts();
+      }
+    }
+
+    function priceMap(x) {
+      const map = {
+        sharp: x.sharpPrice || x.peakPrice,
+        peak: x.peakPrice,
+        flat: x.flatPrice,
+        valley: x.valleyPrice,
+        deepValley: x.deepValleyPrice || x.valleyPrice
+      };
+      return map;
+    }
+
+    function priceTypeMatrix(x) {
+      const cfg = provinceConfig(x);
+      const base = cfg.priceTypesByMonth || MONTH_DAYS.map(() => cfg.priceTypes);
+      return base.map(monthTypes => monthTypes || cfg.priceTypes);
+    }
+
+    function priceInputsMatchDefaults(x, cfg) {
+      return ["sharpPrice", "peakPrice", "flatPrice", "valleyPrice", "deepValleyPrice"].every(key => Math.abs((Number(x[key]) || 0) - (Number(cfg.prices?.[key]) || 0)) < 1e-9);
+    }
+
+    function priceMapForMonth(x, monthIndex) {
+      const cfg = provinceConfig(x);
+      const seasonal = cfg.seasonalPricesByMonth?.[monthIndex];
+      if (seasonal && priceInputsMatchDefaults(x, cfg)) {
+        return {
+          sharp: seasonal.sharpPrice || seasonal.peakPrice,
+          peak: seasonal.peakPrice,
+          flat: seasonal.flatPrice,
+          valley: seasonal.valleyPrice,
+          deepValley: seasonal.deepValleyPrice || seasonal.valleyPrice
+        };
+      }
+      return priceMap(x);
+    }
+
+    function priceByMonthHour(x, monthIndex) {
+      const map = priceMapForMonth(x, monthIndex);
+      const types = priceTypeMatrix(x)[monthIndex] || provinceConfig(x).priceTypes;
+      return types.map(type => map[type] ?? x.flatPrice);
+    }
+
+    function priceByHour(x) {
+      const matrix = priceTypeMatrix(x);
+      return HOUR_LABELS.map((_, h) => matrix.reduce((sum, types, m) => {
+        const map = priceMapForMonth(x, m);
+        return sum + (map[types[h]] ?? x.flatPrice) * MONTH_DAYS[m];
+      }, 0) / 365);
+    }
+
+    function priceTypeByHour(x) {
+      return provinceConfig(x).priceTypes;
+    }
+
+    function priceTypeByMonthHour(x, monthIndex) {
+      return priceTypeMatrix(x)[monthIndex] || priceTypeByHour(x);
+    }
+
+    function hourShares(x) {
+      const raw = provinceConfig(x).hourShares.map(v => Math.max(v, 0));
+      const total = raw.reduce((a, b) => a + b, 0) || 1;
+      return raw.map(v => v / total);
+    }
+
+    function annualLoadKwh(x) {
+      return (x.fastGuns * x.singleGunDailyKwh + x.slowGuns * x.singleGunDailyKwh * 0.05) * 365;
+    }
+
+    function buildMatrixFromShares(annualKwh, x) {
+      const shares = hourShares(x);
+      const monthWeight = MONTH_DAYS.map(() => 1 / 12);
+      return shares.map(share => monthWeight.map(m => annualKwh * share * m));
+    }
+
+    function pvMatrix(annualPvKwh) {
+      return PV_HOUR_SHAPE.map(h => PV_MONTH_WEIGHT.map(m => annualPvKwh * m * h));
+    }
+
+    function matrixCost(matrix, x) {
+      const prices = MONTH_DAYS.map((_, m) => priceByMonthHour(x, m));
+      let cost = 0;
+      matrix.forEach((row, h) => row.forEach((v, m) => { cost += v * (prices[m]?.[h] ?? x.flatPrice); }));
+      return yuanToWan(cost / Math.max(x.chargeLoss, .01));
+    }
+
+    function applyPv(load, pv) {
+      let after = [];
+      let selfUse = 0;
+      let exportKwh = 0;
+      load.forEach((row, h) => {
+        after[h] = [];
+        row.forEach((v, m) => {
+          const used = Math.min(v, pv[h][m]);
+          selfUse += used;
+          exportKwh += Math.max(pv[h][m] - v, 0);
+          after[h][m] = Math.max(v - pv[h][m], 0);
+        });
+      });
+      return { after, selfUse, exportKwh };
+    }
+
+    function storageFade(yearIndex) {
+      return [0.98, 0.965, 0.95, 0.935, 0.92, 0.905, 0.89, 0.875, 0.86, 0.845][yearIndex % 10];
+    }
+
+    function storageYearFactor(x, yearIndex) {
+      const factors = provinceConfig(x).storageYearFactors;
+      if (factors?.length) return factors[yearIndex % factors.length] ?? factors.at(-1);
+      return storageFade(yearIndex) / storageFade(0);
+    }
+
+    function curveValue(curve, units) {
+      if (!curve?.length || units <= 0) return 0;
+      if (units <= 1) return curve[0] * units;
+      const whole = Math.floor(units);
+      const frac = units - whole;
+      const at = index => {
+        if (index <= 0) return 0;
+        if (index <= curve.length) return curve[index - 1];
+        const last = curve[curve.length - 1];
+        const prev = curve[curve.length - 2] ?? last;
+        return last + (index - curve.length) * Math.max(last - prev, 0);
+      };
+      return at(whole) + (at(whole + 1) - at(whole)) * frac;
+    }
+
+    function excelStorageGain(x, yearIndex, currentShiftedKwh = null) {
+      const firstYearGain = curveValue(provinceConfig(x).storageGainCurve, x.batteryUnits);
+      const yearFactor = storageYearFactor(x, yearIndex);
+      if (currentShiftedKwh === null) return firstYearGain * yearFactor;
+      const cfg = provinceConfig(x);
+      const baseX = { ...x, fastGuns: cfg.baseFastGuns, slowGuns: 0, singleGunDailyKwh: cfg.baseSingleGunDailyKwh };
+      const baseLoad = buildMatrixFromShares(annualLoadKwh(baseX), baseX);
+      const basePv = pvMatrix(baseX.pvKw * cfg.sunHours * baseX.pvUtilization * Math.max(0.99 - 0.004 * yearIndex, 0));
+      const baseAfterPv = applyPv(baseLoad, basePv).after;
+      const baseShiftedKwh = applyStorageAuto(baseAfterPv, baseX.batteryKwh * baseX.batteryUnits, baseX, yearIndex).shiftedKwh;
+      const shiftScale = currentShiftedKwh / Math.max(baseShiftedKwh, 1);
+      const gunScale = (x.fastGuns + x.slowGuns * 0.05) / Math.max(cfg.baseFastGuns, 1);
+      const singleGunScale = Math.sqrt(Math.max(x.singleGunDailyKwh, 0) / Math.max(cfg.baseSingleGunDailyKwh, 1));
+      const utilizationScale = clamp(gunScale * singleGunScale * Math.min(shiftScale, 1), 0, 1.25);
+      return firstYearGain * utilizationScale * yearFactor;
+    }
+
+    function replacementCostForYear(x, yearIndex) {
+      const cfg = provinceConfig(x);
+      const year = yearIndex + 1;
+      if (cfg.batteryReplacementEveryYears && year % cfg.batteryReplacementEveryYears === 0) {
+        return x.batteryKwh * x.batteryUnits * 0.04;
+      }
+      const gunReplacement = year % 5 === 0 ? x.fastGuns / 2 : 0;
+      const batteryReplacement = year % 10 === 0 ? x.batteryKwh * x.batteryUnits * 0.04 : 0;
+      return gunReplacement + batteryReplacement;
+    }
+
+    function isStorageChargeType(type) {
+      return type === "valley" || type === "deepValley";
+    }
+
+    function continuousHourRuns(hours) {
+      const sorted = [...new Set(hours)].sort((a, b) => a - b);
+      const runs = [];
+      sorted.forEach(hour => {
+        const last = runs[runs.length - 1];
+        if (last && hour === last[last.length - 1] + 1) last.push(hour);
+        else runs.push([hour]);
+      });
+      if (runs.length > 1 && runs[0][0] === 0 && runs[runs.length - 1][runs[runs.length - 1].length - 1] === 23) {
+        const last = runs.pop();
+        runs[0] = [...last, ...runs[0]];
+      }
+      return runs.map(hours => ({
+        hours,
+        start: hours[0],
+        end: hours[hours.length - 1] === 23 && hours.includes(0) ? runs[0].filter(h => h < 23).at(-1) : hours[hours.length - 1]
+      }));
+    }
+
+    function storageCyclesForProvince(x, monthIndex = 0) {
+      const types = priceTypeByMonthHour(x, monthIndex);
+      const prices = priceByMonthHour(x, monthIndex);
+      const chargeHours = types.map((type, h) => isStorageChargeType(type) ? h : -1).filter(h => h >= 0);
+      const runs = continuousHourRuns(chargeHours).sort((a, b) => a.end - b.end).slice(0, Math.max(1, Math.min(2, x.storageCycles || 2)));
+
+      return runs.map((run, index) => {
+        const nextRun = runs[index + 1];
+        const windowEnd = nextRun ? nextRun.start : 24;
+        const dischargeHours = [];
+        for (let h = run.end + 1; h < windowEnd; h++) {
+          if (h >= 0 && h < 24 && !isStorageChargeType(types[h])) dischargeHours.push(h);
+        }
+        const sortedDischarge = dischargeHours.sort((a, b) => prices[b] - prices[a] || a - b);
+        return { chargeHours: run.hours, dischargeHours: sortedDischarge };
+      }).filter(cycle => cycle.chargeHours.length && cycle.dischargeHours.length);
+    }
+
+    function applyStorageRule(load, capacityKwh, x, yearIndex) {
+      const after = load.map(row => row.slice());
+      const cycleCount = Math.max(1, Math.min(2, x.storageCycles || 2));
+      const monthlyCap = MONTH_DAYS.map(days => capacityKwh * x.storageSoc * days * storageFade(yearIndex) * cycleCount);
+      let shiftedKwh = 0;
+      let potentialKwh = monthlyCap.reduce((sum, cap) => sum + cap * x.storageEfficiency, 0);
+      for (let m = 0; m < 12; m++) {
+        const prices = priceByMonthHour(x, m);
+        const types = priceTypeByMonthHour(x, m);
+        const chargeHours = types.map((type, h) => isStorageChargeType(type) ? h : -1).filter(h => h >= 0);
+        const dischargeHours = types.map((type, h) => isStorageChargeType(type) ? -1 : h).filter(h => h >= 0).sort((a, b) => prices[b] - prices[a] || a - b);
+        let chargeNeed = monthlyCap[m];
+        chargeHours.forEach((h, index) => {
+          if (chargeNeed <= 0) return;
+          const add = chargeNeed / (chargeHours.length - index);
+          after[h][m] += add;
+          chargeNeed -= add;
+        });
+        let dischargeLeft = monthlyCap[m] * x.storageEfficiency;
+        dischargeHours.forEach(h => {
+          if (dischargeLeft <= 0) return;
+          const take = Math.min(after[h][m], dischargeLeft);
+          after[h][m] -= take;
+          dischargeLeft -= take;
+          shiftedKwh += take;
+        });
+      }
+      return { after, shiftedKwh, potentialKwh };
+    }
+
+    function applyStorageAuto(load, capacityKwh, x, yearIndex) {
+      const after = load.map(row => row.slice());
+      const powerLimit = Math.max(x.batteryPowerKw * x.batteryUnits, 1);
+      let shiftedKwh = 0;
+      let potentialKwh = 0;
+
+      function chargeToTarget(monthIndex, days, targetSoc, currentSoc, chargeHours) {
+        let chargeNeed = Math.max(targetSoc - currentSoc, 0);
+        let charged = 0;
+        chargeHours.forEach(h => {
+          if (chargeNeed <= 0) return;
+          const add = Math.min(powerLimit * days, chargeNeed);
+          after[h][monthIndex] += add;
+          chargeNeed -= add;
+          charged += add;
+        });
+        return currentSoc + charged;
+      }
+
+      function dischargeFromSoc(monthIndex, days, currentSoc, dischargeHours) {
+        let dischargeLeft = currentSoc * x.storageEfficiency;
+        let discharged = 0;
+        dischargeHours.forEach(h => {
+          if (dischargeLeft <= 0) return;
+          const take = Math.min(after[h][monthIndex], powerLimit * days, dischargeLeft);
+          after[h][monthIndex] -= take;
+          dischargeLeft -= take;
+          shiftedKwh += take;
+          discharged += take;
+        });
+        return Math.max(currentSoc - discharged / Math.max(x.storageEfficiency, .01), 0);
+      }
+
+      for (let m = 0; m < 12; m++) {
+        const cycles = storageCyclesForProvince(x, m);
+        const days = MONTH_DAYS[m];
+        const maxSoc = capacityKwh * x.storageSoc * storageFade(yearIndex) * days;
+        potentialKwh += maxSoc * cycles.length * x.storageEfficiency;
+        let soc = 0;
+        cycles.forEach(cycle => {
+          soc = chargeToTarget(m, days, maxSoc, soc, cycle.chargeHours);
+          soc = dischargeFromSoc(m, days, soc, cycle.dischargeHours);
+        });
+      }
+      return { after, shiftedKwh, potentialKwh };
+    }
+
+    function costBreakdown(x) {
+      const civil = x.siteArea * x.civilUnit;
+      const transformer = x.transformerKva * x.transformerUnit;
+      const pv = x.pvKw * (provinceConfig(x).pvUnit ?? x.pvUnit);
+      const steel = x.pvArea * x.steelUnit;
+      const battery = x.batteryKwh * x.batteryUnits * x.batteryUnit;
+      const guns = (x.fastGuns + x.slowGuns) * x.gunUnit;
+      const lounge = x.loungeArea * x.loungeUnit;
+      const grid = x.externalLineCost || x.gridConnection;
+      const other = x.otherCost || 0;
+      const total = civil + transformer + grid + pv + steel + battery + guns + lounge + other;
+      return { civil, transformer, grid, pv, steel, battery, guns, lounge, other, total };
+    }
+
+    function operatingCost(x, totalCost, electricityIncome = 0, serviceIncome = 0) {
+      const transformerOps = x.transformerKva / 2000 >= 3 ? 10 : (x.transformerKva / 2000 >= 2 ? 7.5 : 5);
+      const pvInspect = ["jiangsu", "zhejiang"].includes(x.province) ? 0.2 : 0.7;
+      const lighting = x.lightingCount * 0.1;
+      const network = x.networkCount * 0.1;
+      const barrier = x.barrierCount * 0.1;
+      const software = x.transformerKva / 2000 * 3;
+      const storeManager = x.storeManagerCount * (["jiangsu"].includes(x.province) ? 8.346 : 12.9);
+      const cleaning = x.cleaningCount * 5.2;
+      const dayManager = x.dayManagerCount * 8.346;
+      const nightManager = x.nightManagerCount * 9.102;
+      const septic = x.septicCleanCount * 0.15;
+      const contingency = x.contingencyCount * 1;
+      const clearing = (electricityIncome + serviceIncome) * 0.006;
+      const interconnect = x.interconnectRate * x.interconnectUnitFee * (electricityIncome + serviceIncome);
+      const propertyInsurance = totalCost / 1000;
+      const liabilityInsurance = 0.5;
+      const total = transformerOps + pvInspect + lighting + network + barrier + software + storeManager + cleaning + dayManager + nightManager + septic + contingency + clearing + interconnect + propertyInsurance + liabilityInsurance;
+      return { transformerOps, pvInspect, lighting, network, barrier, software, storeManager, cleaning, dayManager, nightManager, septic, contingency, clearing, interconnect, propertyInsurance, liabilityInsurance, total };
+    }
+
+    function landCostForYear(x, yearIndex) {
+      const interval = Math.max(Math.floor(x.landIncreaseYears || 0), 1);
+      const rate = Math.max(x.landIncreaseRate || 0, 0) / 100;
+      const steps = Math.floor(yearIndex / interval);
+      return x.firstLandCost * Math.pow(1 + rate, steps);
+    }
+
+    function simulateYear(x, yearIndex, mode = x.storageMode) {
+      const cfg = provinceConfig(x);
+      const pvFade = cfg.pvYearFactors?.length
+        ? 0.99 * (cfg.pvYearFactors[yearIndex % cfg.pvYearFactors.length] ?? cfg.pvYearFactors.at(-1))
+        : Math.max(0.99 - 0.004 * yearIndex, 0);
+      const annualLoad = annualLoadKwh(x);
+      const annualPv = x.pvKw * cfg.sunHours * x.pvUtilization * pvFade;
+      const load = buildMatrixFromShares(annualLoad, x);
+      const baseCost = matrixCost(load, x);
+      const pvResult = applyPv(load, pvMatrix(annualPv));
+      const pvCost = matrixCost(pvResult.after, x);
+      const capacity = x.batteryKwh * x.batteryUnits;
+      const ruleStorage = applyStorageRule(pvResult.after, capacity, x, yearIndex);
+      const autoStorage = applyStorageAuto(pvResult.after, capacity, x, yearIndex);
+      const selectedStorage = mode === "rule" ? ruleStorage : autoStorage;
+      const ruleCost = matrixCost(ruleStorage.after, x);
+      const autoCost = matrixCost(autoStorage.after, x);
+      const pvGain = cfg.pvSavingPrice && priceInputsMatchDefaults(x, cfg)
+        ? yuanToWan(annualPv * cfg.pvSavingPrice)
+        : baseCost - pvCost + yuanToWan(pvResult.exportKwh * x.feedInTariff);
+      const storageGain = excelStorageGain(x, yearIndex, autoStorage.shiftedKwh);
+      const storageCost = baseCost - pvGain - storageGain;
+      return {
+        annualLoad,
+        annualPv,
+        baseCost,
+        pvCost,
+        storageCost,
+        pvGain,
+        storageGain,
+        totalGain: pvGain + storageGain,
+        selfUse: pvResult.selfUse,
+        exportKwh: pvResult.exportKwh,
+        shiftedKwh: selectedStorage.shiftedKwh,
+        ruleStorageGain: excelStorageGain(x, yearIndex, autoStorage.shiftedKwh),
+        autoStorageGain: pvCost - autoCost,
+        ruleShiftedKwh: ruleStorage.shiftedKwh,
+        autoShiftedKwh: autoStorage.shiftedKwh,
+        storagePotentialKwh: selectedStorage.potentialKwh
+      };
+    }
+
+    function brandIncomeForYear(x, yearIndex) {
+      const year = yearIndex + 1;
+      return year >= 2 && year <= 7 ? x.brandIncome : 0;
+    }
+
+    function calculate(inputOverride = {}) {
+      const x = { ...getInputs(), ...inputOverride };
+      const costs = costBreakdown(x);
+      const rows = [];
+      let cumulative = -costs.total;
+      let payback = null;
+      let pvGainTotal = 0;
+      let storageGainTotal = 0;
+      for (let i = 0; i < YEARS; i++) {
+        const energy = simulateYear(x, i);
+        const electricityIncome = energy.baseCost * Math.max(x.chargeLoss, .01);
+        const serviceIncome = yuanToWan(energy.annualLoad * x.serviceFee);
+        const opBreakdown = operatingCost(x, costs.total, electricityIncome, serviceIncome);
+        const ops = opBreakdown.total;
+        const landCost = landCostForYear(x, i);
+        const replacementCost = replacementCostForYear(x, i);
+        const brand = brandIncomeForYear(x, i);
+        const carLife = x.carLifeIncome;
+        const tax = Math.max((electricityIncome + serviceIncome - energy.storageCost) / 1.13 * 0.13 * 1.12, 0);
+        const net = electricityIncome + serviceIncome + brand + carLife - energy.storageCost - ops - landCost - replacementCost - tax;
+        const before = cumulative;
+        cumulative += net;
+        if (payback === null && cumulative >= 0) payback = i + (-before) / Math.max(net, 1e-9);
+        pvGainTotal += energy.pvGain;
+        storageGainTotal += energy.storageGain;
+        rows.push({ year: i + 1, ...energy, electricityIncome, serviceIncome, brand, carLife, ops, opBreakdown, landCost, replacementCost, tax, net, cumulative });
+      }
+      return { x, costs, ops: rows[0]?.ops ?? 0, defaultOps: rows[0]?.ops ?? 0, rows, payback, pvGainTotal, storageGainTotal };
+    }
+
+    function renderSensitivity(base) {
+      const scenarios = [
+        ["单枪日充电量", "-10%", { singleGunDailyKwh: base.x.singleGunDailyKwh * 0.9 }],
+        ["单枪日充电量", "+10%", { singleGunDailyKwh: base.x.singleGunDailyKwh * 1.1 }],
+        ["服务费", "-0.10元", { serviceFee: Math.max(base.x.serviceFee - 0.1, 0) }],
+        ["服务费", "+0.10元", { serviceFee: base.x.serviceFee + 0.1 }],
+        ["储能台数", "-2台", { batteryUnits: Math.max(base.x.batteryUnits - 2, 0) }],
+        ["储能台数", "+2台", { batteryUnits: base.x.batteryUnits + 2 }],
+        ["峰谷价差", "扩大20%", { peakPrice: base.x.peakPrice * 1.1, valleyPrice: base.x.valleyPrice * 0.9 }],
+        ["土地首年成本", "+20万", { firstLandCost: base.x.firstLandCost + 20 }]
+      ];
+      document.getElementById("sensitivityRows").innerHTML = scenarios.map(([name, change, patch]) => {
+        const r = calculate(patch);
+        const y1 = r.rows[0];
+        return `<tr><td>${name}</td><td>${change}</td><td>${r.payback ? fmt(r.payback, 1) + " 年" : "未回本"}</td><td class="${y1.net >= 0 ? "positive" : "negative"}">${wan(y1.net)}</td></tr>`;
+      }).join("");
+    }
+
+    function applyProvinceDefaults() {
+      const x = getInputs();
+      const prices = provinceConfig(x).prices;
+      Object.entries(prices).forEach(([key, value]) => {
+        const input = document.querySelector(`input[data-key="${key}"]`);
+        if (input) input.value = value;
+      });
+      const opDefaults = {
+        lightingCount: 1,
+        networkCount: 1,
+        barrierCount: 1,
+        storeManagerCount: ["zhejiang", "guangdong", "anhui", "hunan"].includes(x.province) ? 1 : 0,
+        cleaningCount: 1,
+        dayManagerCount: 0,
+        nightManagerCount: 0,
+        septicCleanCount: 0,
+        contingencyCount: 1,
+        interconnectRate: 0,
+        interconnectUnitFee: 0.15
+      };
+      Object.entries(opDefaults).forEach(([key, value]) => {
+        const input = document.querySelector(`input[data-key="${key}"]`);
+        if (input) input.value = value;
+      });
+    }
+
+    function render() {
+      const r = calculate();
+      const first = r.rows[0];
+      document.getElementById("totalCost").textContent = `${wan(r.costs.total)} 万`;
+      document.getElementById("cashflowYear1").textContent = `${wan(first.net)} 万`;
+      document.getElementById("cashflowYear1").className = `value ${first.net >= 0 ? "positive" : "negative"}`;
+      document.getElementById("payback").textContent = r.payback ? `${fmt(r.payback, 1)} 年` : "未回本";
+      document.getElementById("energyGain").textContent = `${wan(first.totalGain)} 万`;
+
+      const costRows = [["基础设施", r.costs.civil, "场地面积 × 单价"], ["箱变", r.costs.transformer, "变压器功率 × 单价"], ["外线工程", r.costs.grid, "场地配置输入"], ["光伏系统", r.costs.pv, "光伏功率 × 单价"], ["钢结构", r.costs.steel, "光伏面积 × 单价"], ["储能系统", r.costs.battery, "容量 × 台数 × 单价"], ["充电枪", r.costs.guns, "枪数 × 综合单价"], ["休息区", r.costs.lounge, "面积 × 单价"], ["其他成本", r.costs.other, "场地配置输入"], ["合计", r.costs.total, ""]];
+      document.getElementById("costRows").innerHTML = costRows.map(([name, value, logic]) => `<tr><td>${name}</td><td><strong>${wan(value)}</strong></td><td class="muted">${logic}</td></tr>`).join("");
+
+      const op = first.opBreakdown;
+      const opRows = op.fixedOps !== undefined ? [
+        ["Excel年度运维成本", op.fixedOps, "新版模板预设年度运维成本"],
+        ["合计", op.total, "SUM"]
+      ] : [
+        ["充电桩运维费用", op.transformerOps, "2000kVA：1台5，2台7.5，3台10"],
+        ["光伏巡检、清洗", op.pvInspect, "江苏/浙江0.2，其他省份0.7"],
+        ["照明", op.lighting, "数量 × 0.1"],
+        ["网络", op.network, "数量 × 0.1"],
+        ["道闸", op.barrier, "数量 × 0.1"],
+        ["软件系统", op.software, "变压器功率 / 2000 × 3"],
+        ["店长", op.storeManager, "人数 × 省份人工单价"],
+        ["卫生", op.cleaning, "人数 × 5.2"],
+        ["管理员（日）", op.dayManager, "人数 × 8.346"],
+        ["管理员（夜）", op.nightManager, "人数 × 9.102"],
+        ["化粪池、沉砂池清污", op.septic, "次数 × 0.15"],
+        ["零星维修", op.contingency, "项数 × 1"],
+        ["清分通道费", op.clearing, "电费收入+服务费收入 × 6‰"],
+        ["互联互通通道费", op.interconnect, "比例 × 单价 × 电费+服务费"],
+        ["财产险", op.propertyInsurance, "建设总成本 / 1000"],
+        ["公责险", op.liabilityInsurance, "固定0.5"],
+        ["合计", op.total, "SUM"]
+      ];
+      document.getElementById("opRows").innerHTML = opRows.map(([name, value, note]) => `<tr><td>${name}</td><td><strong>${wan(value)}</strong></td><td class="muted">${note}</td></tr>`).join("");
+
+      const profitRows = [["电费收入", first.electricityIncome, "无光储购电量 × 分时电价 / 损耗"], ["实际购电成本", -first.storageCost, "光伏+储能后实际购电成本"], ["服务费收入", first.serviceIncome, "年充电量 × 服务费"], ["品牌收入", first.brand, "按所选省份现金流表年限计入"], ["车生活收入", first.carLife, "按年计入其他经营收入"], ["光伏增效", first.pvGain, "自发自用节电 + 余电上网"], ["储能增效", first.storageGain, "按Excel储能台数-增效曲线"], ["土地成本", -first.landCost, "首年成本，按周期涨幅递增"], ["运维成本", -first.ops, "按年度运维成本输入"], ["设备更换成本", -first.replacementCost, "充电枪5年、储能10年更换"], ["增值税及附加税", -first.tax, "(电费收入 + 服务费收入 - 实际购电成本) / 1.13 × 13% × 1.12"], ["首年净现金流", first.net, "收入 - 电费成本 - 土地 - 运维 - 更换 - 税费"]];
+      document.getElementById("profitRows").innerHTML = profitRows.map(([name, value, note]) => `<tr><td>${name}</td><td class="${value >= 0 ? "positive" : "negative"}">${wan(value)}</td><td class="muted">${note}</td></tr>`).join("");
+
+      const storageCycleRate = shiftedKwh => shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency * 365, 1);
+      document.getElementById("storageCompareRows").innerHTML = [
+        ["Excel规则", first.ruleStorageGain, first.ruleShiftedKwh, "现金流表储能台数-增效曲线"],
+        ["两充两放模拟", first.autoStorageGain, first.autoShiftedKwh, "按省份谷段和高价时段约束模拟"]
+      ].map(([name, gain, shift, note]) => `<tr><td>${name}</td><td>${wan(gain)}</td><td>${fmt(shift / 10000, 1)} 万kWh</td><td>${fmt(storageCycleRate(shift) * 100, 1)}%</td><td class="muted">${note}</td></tr>`).join("");
+
+      document.getElementById("energyRows").innerHTML = [["光伏发电量（万kWh）", first.annualPv / 10000, r.rows.reduce((s, y) => s + y.annualPv, 0) / 10000], ["光伏自用电量（万kWh）", first.selfUse / 10000, r.rows.reduce((s, y) => s + y.selfUse, 0) / 10000], ["余电上网（万kWh）", first.exportKwh / 10000, r.rows.reduce((s, y) => s + y.exportKwh, 0) / 10000], ["储能转移电量（万kWh）", first.shiftedKwh / 10000, r.rows.reduce((s, y) => s + y.shiftedKwh, 0) / 10000], ["光伏增效（万元）", first.pvGain, r.pvGainTotal], ["储能增效（万元）", first.storageGain, r.storageGainTotal]].map(([name, y1, total]) => `<tr><td>${name}</td><td>${fmt(y1, 1)}</td><td>${fmt(total, 1)}</td></tr>`).join("");
+
+      const avg = values => values.reduce((s, v) => s + v, 0) / Math.max(values.length, 1);
+      const pct = value => `${fmt(value * 100, 1)}%`;
+      const utilizationRows = [
+        ["光伏自用率", first.selfUse / Math.max(first.annualPv, 1), avg(r.rows.map(y => y.selfUse / Math.max(y.annualPv, 1))), "自用光伏电量 / 光伏发电量"],
+        ["光伏余电率", first.exportKwh / Math.max(first.annualPv, 1), avg(r.rows.map(y => y.exportKwh / Math.max(y.annualPv, 1))), "余电上网电量 / 光伏发电量"],
+        ["储能利用率", first.shiftedKwh / Math.max(first.storagePotentialKwh, 1), avg(r.rows.map(y => y.shiftedKwh / Math.max(y.storagePotentialKwh, 1))), "实际放电替代电量 / 理论可放电量"],
+        ["储能等效循环", first.shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency, 1), avg(r.rows.map(y => y.shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency, 1))), "按年放电量折算的满充满放次数"]
+      ];
+      document.getElementById("utilizationRows").innerHTML = utilizationRows.map(([name, y1, avgValue, note], index) => `<tr><td>${name}</td><td>${index < 3 ? pct(y1) : fmt(y1, 0)}</td><td>${index < 3 ? pct(avgValue) : fmt(avgValue, 0)}</td><td class="muted">${note}</td></tr>`).join("");
+
+      const maxNet = Math.max(...r.rows.slice(0, 10).map(y => Math.abs(y.net)), 1);
+      document.getElementById("bars").innerHTML = r.rows.slice(0, 10).map(y => `<div class="bar-row"><div>第${y.year}年</div><div class="bar-track"><div class="bar-fill" style="width:${clamp(Math.abs(y.net) / maxNet * 100, 2, 100)}%;background:${y.net >= 0 ? "linear-gradient(90deg, var(--brand), var(--blue))" : "#b42318"}"></div></div><div>${wan(y.net)}</div></div>`).join("");
+
+      renderSensitivity(r);
+    }
+
+    function syncFormValuesForExport(root) {
+      root.querySelectorAll("input").forEach(input => input.setAttribute("value", input.value));
+      root.querySelectorAll("select").forEach(select => {
+        [...select.options].forEach(option => {
+          if (option.value === select.value) option.setAttribute("selected", "selected");
+          else option.removeAttribute("selected");
+        });
+      });
+    }
+
+    function collectPageStyles() {
+      return [...document.styleSheets].map(sheet => {
+        try {
+          return [...sheet.cssRules].map(rule => rule.cssText).join("\n");
+        } catch {
+          return "";
+        }
+      }).join("\n");
+    }
+
+    async function exportScreenshot() {
+      render();
+      const button = document.getElementById("exportScreenshotBtn");
+      const originalText = button.textContent;
+      button.textContent = "Exporting...";
+      button.disabled = true;
+      try {
+        const width = 1500;
+        const padding = 32;
+        const gap = 24;
+        const leftWidth = 420;
+        const rightWidth = width - padding * 2 - gap - leftWidth;
+        const maxHeight = 24000;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = maxHeight;
+        const ctx = canvas.getContext("2d");
+        const getText = el => (el?.textContent || "").replace(/\s+/g, " ").trim();
+        const drawText = (value, x, y, maxWidth, options = {}) => {
+          const fontSize = options.fontSize || 14;
+          const lineHeight = options.lineHeight || Math.round(fontSize * 1.55);
+          ctx.font = `${options.weight || 400} ${fontSize}px "Microsoft YaHei", Arial, sans-serif`;
+          ctx.fillStyle = options.color || "#1f2933";
+          const content = String(value ?? "");
+          const lines = [];
+          let line = "";
+          for (const char of content) {
+            const next = line + char;
+            if (ctx.measureText(next).width > maxWidth && line) {
+              lines.push(line);
+              line = char;
+            } else {
+              line = next;
+            }
+          }
+          lines.push(line);
+          lines.forEach((item, index) => ctx.fillText(item, x, y + index * lineHeight));
+          return y + lines.length * lineHeight;
+        };
+        const card = (x, y, w, h) => {
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = "#d8dee8";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(x, y, w, h, 8);
+          ctx.fill();
+          ctx.stroke();
+        };
+        const outlineCard = (x, y, w, h) => {
+          ctx.strokeStyle = "#d8dee8";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(x, y, w, h, 8);
+          ctx.stroke();
+        };
+        const rowsFromTable = table => [...table.querySelectorAll("tr")].map(tr => [...tr.children].map(td => getText(td)));
+        const drawTablePanel = (title, rows, x, y, w) => {
+          const start = y;
+          y += 18;
+          y = drawText(title, x + 18, y, w - 36, { fontSize: 18, weight: 700, lineHeight: 24 }) + 8;
+          const colCount = Math.max(...rows.map(row => row.length), 1);
+          const colWidths = colCount === 3 ? [w * .34, w * .22, w * .36] : colCount === 4 ? [w * .24, w * .18, w * .22, w * .28] : Array.from({ length: colCount }, () => (w - 36) / colCount);
+          rows.forEach((row, rowIndex) => {
+            const rowStart = y;
+            let rowHeight = 28;
+            row.forEach((cell, index) => {
+              ctx.font = `${rowIndex === 0 ? 700 : 400} 13px "Microsoft YaHei", Arial, sans-serif`;
+              const lineCount = Math.max(1, Math.ceil(ctx.measureText(cell).width / Math.max(colWidths[index] - 10, 40)));
+              rowHeight = Math.max(rowHeight, lineCount * 18 + 10);
+            });
+            ctx.fillStyle = rowIndex === 0 ? "#f8fafc" : "#ffffff";
+            ctx.fillRect(x + 18, rowStart, w - 36, rowHeight);
+            ctx.strokeStyle = "#e6ebf2";
+            ctx.beginPath();
+            ctx.moveTo(x + 18, rowStart + rowHeight);
+            ctx.lineTo(x + w - 18, rowStart + rowHeight);
+            ctx.stroke();
+            let colX = x + 24;
+            row.forEach((cell, index) => {
+              drawText(cell, colX, rowStart + 19, colWidths[index] - 12, { fontSize: 13, weight: rowIndex === 0 ? 700 : 400, color: rowIndex === 0 ? "#475467" : "#1f2933", lineHeight: 18 });
+              colX += colWidths[index];
+            });
+            y += rowHeight;
+          });
+          y += 18;
+          outlineCard(x, start, w, y - start);
+          return y + 14;
+        };
+        const drawInputs = (x, y, w) => {
+          const start = y;
+          y += 18;
+          y = drawText("Input Parameters", x + 18, y, w - 36, { fontSize: 18, weight: 700, lineHeight: 24 }) + 10;
+          [...document.querySelectorAll(".inputs > *")].forEach(el => {
+            if (el.classList?.contains("section-title")) {
+              y += 8;
+              y = drawText(getText(el), x + 18, y, w - 36, { fontSize: 15, weight: 700, color: "#0f766e", lineHeight: 22 }) + 4;
+              return;
+            }
+            if (el.tagName === "LABEL") {
+              const control = el.querySelector("input, select");
+              const controlText = getText(control);
+              const label = getText(el).replace(controlText, "").trim();
+              const value = control?.tagName === "SELECT" ? getText(control.selectedOptions[0]) : control?.value;
+              y = drawText(`${label}: ${value ?? ""}`, x + 18, y, w - 36, { fontSize: 13, color: "#344054", lineHeight: 20 });
+            }
+          });
+          y += 18;
+          outlineCard(x, start, w, y - start);
+          return y;
+        };
+        const drawKpis = (x, y, w) => {
+          const cards = [...document.querySelectorAll(".kpi")];
+          const cardW = (w - 18) / 2;
+          cards.forEach((item, index) => {
+            const cx = x + (index % 2) * (cardW + 18);
+            const cy = y + Math.floor(index / 2) * 112;
+            card(cx, cy, cardW, 96);
+            drawText(getText(item.querySelector(".label")), cx + 14, cy + 24, cardW - 28, { fontSize: 13, color: "#667085" });
+            drawText(getText(item.querySelector(".value")), cx + 14, cy + 54, cardW - 28, { fontSize: 24, weight: 800, lineHeight: 28 });
+            drawText(getText(item.querySelector(".note")), cx + 14, cy + 78, cardW - 28, { fontSize: 11, color: "#667085", lineHeight: 15 });
+          });
+          return y + Math.ceil(cards.length / 2) * 112 + 12;
+        };
+
+        ctx.fillStyle = "#f6f7f9";
+        ctx.fillRect(0, 0, width, maxHeight);
+        let y = padding;
+        y = drawText(getText(document.querySelector("header h1")) || "Report", padding, y, width - padding * 2, { fontSize: 28, weight: 800, lineHeight: 36 });
+        y = drawText(`${new Date().toLocaleString("zh-CN")}    ${provinceConfig(getInputs()).name}`, padding, y + 4, width - padding * 2, { fontSize: 14, color: "#667085", lineHeight: 22 }) + 18;
+        const leftY = drawInputs(padding, y, leftWidth);
+        let rightY = drawKpis(padding + leftWidth + gap, y, rightWidth);
+        document.querySelectorAll(".results .panel.content:not(#accountPanel)").forEach(panel => {
+          const title = getText(panel.querySelector("h2"));
+          panel.querySelectorAll("table").forEach((table, index) => {
+            const rows = rowsFromTable(table);
+            if (rows.length) rightY = drawTablePanel(index ? `${title} - table` : title, rows, padding + leftWidth + gap, rightY, rightWidth);
+          });
+          const formula = panel.querySelector(".formula");
+          if (formula) {
+            const rows = [...formula.children].map(item => [getText(item)]);
+            rightY = drawTablePanel(title, [["Logic"], ...rows], padding + leftWidth + gap, rightY, rightWidth);
+          }
+        });
+
+        const finalHeight = Math.min(Math.ceil(Math.max(leftY, rightY) + padding), maxHeight);
+        const output = document.createElement("canvas");
+        output.width = width;
+        output.height = finalHeight;
+        output.getContext("2d").drawImage(canvas, 0, 0);
+        const blob = await new Promise(resolve => output.toBlob(resolve, "image/png", 1));
+        if (!blob) throw new Error("PNG export failed");
+        const provinceName = provinceConfig(getInputs()).name;
+        const dateText = new Date().toISOString().slice(0, 10);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `ev-calc-${provinceName}-${dateText}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+      } catch (error) {
+        console.error(error);
+        alert(`Export failed: ${error.message || error}`);
+      } finally {
+        button.textContent = originalText;
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("loginPassword").addEventListener("keydown", event => {
+      if (event.key === "Enter") login();
+    });
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("exportScreenshotBtn").addEventListener("click", exportScreenshot);
+    document.getElementById("accountToggleBtn").addEventListener("click", () => {
+      if (!isAdminAccount()) return;
+      document.getElementById("accountPanel").classList.toggle("hidden");
+      renderAccounts();
+    });
+    document.getElementById("addAccountBtn").addEventListener("click", addAccount);
+    document.getElementById("accountRows").addEventListener("click", handleAccountAction);
+    document.querySelectorAll("input[data-key], select[data-key]").forEach(el => el.addEventListener("input", render));
+    document.querySelectorAll("select[data-key]").forEach(el => el.addEventListener("change", render));
+    document.querySelectorAll('select[data-key="province"]').forEach(el => el.addEventListener("change", () => {
+      applyProvinceDefaults();
+      render();
+    }));
+    loadAccounts();
+    setAuthVisible(Boolean(currentUser()));
+    render();
+  </script>
+</body>
+</html>
