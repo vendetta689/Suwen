@@ -206,8 +206,8 @@ function setAuthVisible(visible){
   document.getElementById('accountToggleBtn').classList.toggle('hidden',!isAdminAccount());
   document.getElementById('currentUser').textContent=visible?`${currentUser()} · ${isAdminAccount()?'管理员':PROVINCE_NAMES[activeProfile.province]}`:'';
 }
-function localLogout(){clearTimeout(timer);requestNumber++;saveSession(null);activeProfile=null;serverReport=null;accounts=[];exportReady(false);document.getElementById('accountPanel').classList.add('hidden');document.getElementById('loginPassword').value='';setAuthVisible(false);}
-async function logout(){try{if(session)await api('logout');}finally{localLogout();}}
+function localLogout(){clearTimeout(timer);requestNumber++;saveSession(null);activeProfile=null;serverReport=null;accounts=[];exportReady(false);document.getElementById('accountPanel').classList.add('hidden');document.getElementById('loginPassword').value='';setAuthVisible(false);document.dispatchEvent(new Event('suwen-session'));}
+async function logout(){if(!document.dispatchEvent(new Event('suwen-before-logout',{cancelable:true})))return;try{if(session)await api('logout');}finally{localLogout();}}
 async function startSession(){
   const me=await api('me');activeProfile=me.profile;
   Object.keys(PROVINCE_CONFIGS).forEach(key=>delete PROVINCE_CONFIGS[key]);Object.assign(PROVINCE_CONFIGS,me.metadata);
@@ -215,7 +215,7 @@ async function startSession(){
   for(const option of select.options){option.disabled=!Object.hasOwn(PROVINCE_CONFIGS,option.value);option.hidden=option.disabled;}
   if(!isAdminAccount())select.value=activeProfile.province;
   else if(!Object.hasOwn(PROVINCE_CONFIGS,select.value))select.value=Object.keys(PROVINCE_CONFIGS)[0];
-  select.disabled=!isAdminAccount();applyProvinceDefaults();setAuthVisible(true);await refreshReport();
+  select.disabled=!isAdminAccount();applyProvinceDefaults();setAuthVisible(true);document.dispatchEvent(new Event('suwen-session'));await refreshReport();
 }
 async function login(){
   const button=document.getElementById('loginBtn'),error=document.getElementById('loginError');button.disabled=true;error.textContent='';

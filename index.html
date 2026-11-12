@@ -93,6 +93,7 @@
     input:focus, select:focus { border-color:#f46b25; outline:2px solid rgba(244,107,37,.15); }
   </style>
   <link rel="stylesheet" href="dashboard-trial.css">
+<link rel="stylesheet" href="scenarios.css">
 </head>
 <body>
   <section id="loginView" class="login-screen">
@@ -115,7 +116,8 @@
       </div>
       <div class="top-actions">
         <span id="currentUser" class="muted"></span>
-        <button id="exportScreenshotBtn" type="button">导出截图</button>
+        <button id="scenarioOpen" type="button">我的方案库</button>
+<button id="exportScreenshotBtn" type="button">导出截图</button>
         <button id="exportPptBtn" type="button">导出PPT看板</button>
         <button id="accountToggleBtn" type="button">账户管理</button>
         <button id="logoutBtn" type="button">退出登录</button>
@@ -307,5 +309,15 @@
 <script src="app.js"></script>
   <script src="pptxgen.bundle.js"></script>
   <script src="ppt-dashboard.js"></script>
+<dialog id="scenarioDialog" aria-labelledby="scenarioHeading">
+  <div class="scenario-head"><h2 id="scenarioHeading">我的方案库</h2><button type="button" id="scenarioClose" aria-label="关闭方案库">关闭</button></div>
+  <div class="scenario-editor"><label>项目名称<input id="scenarioName" maxlength="80" autocomplete="off"></label><button type="button" id="scenarioSave" class="primary-btn">保存当前参数</button><button type="button" id="scenarioCopy">另存为新方案</button></div>
+  <p id="scenarioCurrent" class="muted"></p>
+  <div class="scenario-search"><input id="scenarioSearch" type="search" placeholder="搜索项目名称" aria-label="搜索项目名称"><button type="button" id="scenarioReload">刷新</button></div>
+  <div id="scenarioStatus" role="status" aria-live="polite"></div>
+  <div class="scenario-table"><table><thead><tr><th>项目名称</th><th>省份</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="scenarioRows"></tbody></table></div>
+</dialog>
+
+<script src="scenarios-client.js"></script>
 </body>
 </html>
