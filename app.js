@@ -204,6 +204,7 @@ function setAuthVisible(visible){
   document.getElementById('loginView').classList.toggle('hidden',visible);
   document.getElementById('appShell').classList.toggle('hidden',!visible);
   document.getElementById('accountToggleBtn').classList.toggle('hidden',!isAdminAccount());
+  document.getElementById('adminEnergyOpen').classList.toggle('hidden',!visible||!isAdminAccount());
   document.getElementById('currentUser').textContent=visible?`${currentUser()} · ${isAdminAccount()?'管理员':PROVINCE_NAMES[activeProfile.province]}`:'';
 }
 function localLogout(){clearTimeout(timer);requestNumber++;saveSession(null);activeProfile=null;serverReport=null;accounts=[];exportReady(false);document.getElementById('accountPanel').classList.add('hidden');document.getElementById('loginPassword').value='';setAuthVisible(false);document.dispatchEvent(new Event('suwen-session'));}
