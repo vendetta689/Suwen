@@ -7,7 +7,8 @@
 <section class="band"><h2>03 / 所选月份代表日 · 24小时明细</h2><p class="note">电量单位：kWh；金额单位：元。电网供桩、储能充电为站内能量口径；国网计费购电另含模型电损。点击行可切换上方流向图。</p><div class="scroll"><table id="hours"></table></div></section>
 <section class="band"><h2>04 / 与现有年度模型闭合核对</h2><div class="kpis" id="annual"></div><p class="note" id="closure"></p><p class="note">月度负荷沿用底模的全年电量平均分配12个月，再除当月天数；因此代表日用电量可能与输入的场站日充电量略有差异。首年光伏衰减、储能衰减、充放电规则、购电损耗均直接沿用当前模型。逐小时仅展示经营毛贡献，不分摊土地、运维、税费、建设及设备更换成本，不等同于净现金流。</p></section>
 </main><footer>分时分析沿用当前测算参数及省级模型。普通账号无权请求此分析数据。</footer>
-<script>const names={jiangsu:'江苏',zhejiang:'浙江',chongqing:'重庆',guangdong:'广东',sichuan:'四川',anhui:'安徽',hunan:'湖南',shanghai:'上海'};
+<script>const MONTH_DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const names={jiangsu:'江苏',zhejiang:'浙江',chongqing:'重庆',guangdong:'广东',sichuan:'四川',anhui:'安徽',hunan:'湖南',shanghai:'上海'};
 const labels={sharp:'尖峰',peak:'峰',flat:'平',valley:'谷',deepValley:'深谷'},colors={sharp:'#be5d7d',peak:'#ed8a45',flat:'#8294ab',valley:'#18a283',deepValley:'#488fc4'};
 const $=id=>document.getElementById(id),n=(v,d=1)=>Number(v).toLocaleString('zh-CN',{minimumFractionDigits:d,maximumFractionDigits:d});let state,month=0,hour=15;
 
@@ -34,3 +35,4 @@ function draw(){
 for(let m=0;m<12;m++)$('month').add(new Option((m+1)+'月',m));for(let h=0;h<24;h++)$('hour').add(new Option(h+':00–'+(h+1)+':00',h));$('legend').innerHTML=Object.entries(labels).map(([k,v])=>'<span><i class="'+k+'"></i>'+v+'</span>').join('');
 $('month').onchange=()=>{month=+$('month').value;if(state)draw();};$('hour').onchange=()=>{hour=+$('hour').value;if(state)draw();};$('matrix').onclick=e=>{const b=e.target.closest('[data-m]');if(b&&state){month=+b.dataset.m;hour=+b.dataset.h;draw();}};$('hours').onclick=e=>{const row=e.target.closest('[data-hour]');if(row&&state){hour=+row.dataset.hour;draw();}};
 window.addEventListener('message',event=>{if(event.origin!==location.origin||event.source!==parent)return;if(event.data?.type==='suwen-energy-data'){state=event.data.data;draw();document.querySelector('main').hidden=false;document.getElementById('empty').hidden=true;}if(event.data?.type==='suwen-energy-clear'){state=null;document.querySelector('main').hidden=true;document.getElementById('empty').hidden=false;for(const id of ['matrix','flow','hours','metrics','profit','annual','closure','balance','selectedInfo','detailTitle'])$(id).innerHTML='';}});</script></html>
+
