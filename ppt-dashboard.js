@@ -1,94 +1,64 @@
-(() => {
-  const button = document.getElementById('exportPptBtn');
-  const num = (v, d = 1) => Number.isFinite(v) ? v.toLocaleString('zh-CN', {minimumFractionDigits:d, maximumFractionDigits:d}) : '--';
-  const c = {ink:'12233A', muted:'738092', orange:'F46B25', green:'138C70', blue:'397A9F', bg:'F3F5F7', white:'FFFFFF', line:'E0E6EC'};
-  button.addEventListener('click', async () => {
-    button.disabled = true;
-    try {
-      if (typeof PptxGenJS === 'undefined') throw new Error('PPT组件未加载，请检查 pptxgen.bundle.js 是否与网页放在同一目录。');
-      const r=calculate(), x=r.x, y=r.rows[0];
-      const province=document.querySelector('select[data-key="province"] option:checked').textContent;
-      const ppt=new PptxGenJS(); ppt.layout='LAYOUT_WIDE'; ppt.author='光储充场站投资测算工具'; ppt.title=`${province}场站投资测算看板`;
-      const s=ppt.addSlide(); s.background={color:c.bg};
-      const text=(t,x,y,w,h,size=10,color=c.ink,extra={})=>s.addText(String(t),{x,y,w,h,fontFace:'Microsoft YaHei',fontSize:size,color,margin:0,fit:'shrink',...extra});
-      const box=(x,y,w,h)=>s.addShape(ppt.ShapeType.roundRect,{x,y,w,h,radius:0.06,rectRadius:0.06,line:{color:c.line,width:0.5},fill:{color:c.white}});
-      const row=(label,value,x,y,w)=>{text(label,x,y,w*0.48,0.2,9,c.muted);text(value,x+w*0.48,y,w*0.52,0.2,9,c.ink,{bold:true,align:'right'});};
-      const title=(label,x,y)=>text(label,x,y,4,0.25,12,c.ink,{bold:true});
-      s.addShape(ppt.ShapeType.rect,{x:0,y:0,w:13.333,h:0.09,line:{color:c.orange},fill:{color:c.orange}});
-      text('光储充 · 场站投资测算',0.32,0.23,7,0.35,20,c.ink,{bold:true});
-      text(`${province}  |  ${new Date().toLocaleDateString('zh-CN')}  |  首年口径`,8.0,0.31,5,0.2,9,c.muted,{align:'right'});
-      const kpis=[['静态回本周期',r.payback ? `${num(r.payback,2)} 年`:'未回本'],['首年净现金流',`${num(y.net)} 万元`],['总建设成本',`${num(r.costs.total)} 万元`],['首年光储增效',`${num(y.pvGain+y.storageGain)} 万元`],['品牌年收入',`${num(x.brandIncome)} 万元`]];
-      kpis.forEach(([label,value],i)=>{const xx=0.32+i*2.55;box(xx,0.79,2.42,0.92);text(label,xx+0.14,0.94,2.14,0.18,9,c.muted);text(value,xx+0.14,1.21,2.14,0.32,17,i===0?c.orange:c.ink,{bold:true});});
-      box(0.32,1.88,4.1,2.14); title('场站配置与成本',0.52,2.07);
-      const configurationGroups=[
-        {name:'场地',height:.25,lines:[`面积 ${num(x.siteArea,0)} ㎡    首年租金 ${num(y.landCost)} 万元`]},
-        {name:'设备',height:.44,lines:[`变压器 ${num(x.transformerKva,0)} kVA`, `光伏 ${num(x.pvArea,0)} ㎡ / ${num(x.pvKw,1)} kW`, `储能 ${num(x.batteryUnits,0)} 台 × ${num(x.batteryKwh,0)} kWh/台`]},
-        {name:'休息区及车生活',height:.25,lines:[`休息区 ${num(x.loungeArea,0)} ㎡    车生活 ${num(x.carLifeIncome)} 万元/年`]},
-        {name:'外线及其他成本',height:.25,lines:[`外线 ${num(r.costs.grid)} 万元    其他 ${num(r.costs.other)} 万元`]},
-        {name:'年运维成本',height:.25,lines:[`${num(y.ops)} 万元/年`]}
-      ];
-      let configurationY=2.42;
-      configurationGroups.forEach(group=>{
-        text(group.name,.52,configurationY+.015,1.05,.19,7.5,'71849A',{bold:true});
-        group.lines.forEach((value,i)=>text(value,1.62,configurationY+.01+i*.137,2.59,.16,7.7,'193F69',{bold:true}));
-        s.addShape(ppt.ShapeType.line,{x:.52,y:configurationY+group.height,w:3.7,h:0,line:{color:'E5ECF3',width:.4}});
-        configurationY+=group.height+.025;
-      });
-      const guns=x.fastGuns+x.slowGuns, daily=guns*x.singleGunDailyKwh;
-      box(4.56,1.88,3.62,2.14); title('市场假设',4.76,2.07);
-      row('单枪日充电量',`${num(x.singleGunDailyKwh,0)} kWh/枪`,4.76,2.45,3.22);
-      row('充电枪数',`${num(guns,0)} 把（快${num(x.fastGuns,0)} / 慢${num(x.slowGuns,0)}）`,4.76,2.76,3.22);
-      row('服务费',`${num(x.serviceFee,2)} 元/kWh`,4.76,3.07,3.22);
-      row('场站日充电量',`${num(daily,0)} kWh`,4.76,3.38,3.22);
-      row('场站年充电量',`${num(y.annualLoad/10000,2)} 万kWh`,4.76,3.69,3.22);
-      box(8.32,1.88,4.69,2.14); title('光伏与储能增效',8.52,2.07);
-      row('光伏年发电 / 日均',`${num(y.annualPv/10000,2)} 万kWh / ${num(y.annualPv/365,0)} kWh`,8.52,2.43,4.29);
-      row('光伏年增效 / 每度',`${num(y.pvGain)} 万元 / ${num(y.annualLoad?y.pvGain*10000/y.annualLoad:0,3)} 元`,8.52,2.72,4.29);
-      row('储能年转移电量',`${num(y.shiftedKwh/10000,2)} 万kWh`,8.52,3.01,4.29);
-      row('储能年增效 / 每度',`${num(y.storageGain)} 万元 / ${num(y.annualLoad?y.storageGain*10000/y.annualLoad:0,3)} 元`,8.52,3.30,4.29);
-      text('每度收益按场站全年充电量折算',8.52,3.65,4.1,0.18,8,c.muted);
-      const current=hourShares(x);
-      const weighted=fn=>{const a=current.map((v,i)=>v*fn(i)), sum=a.reduce((p,v)=>p+v,0);return a.map(v=>sum?v/sum:1/24);};
-      const shapes=[['当前',current],['均匀',Array(24).fill(1/24)],['日间',weighted(i=>i>=8&&i<18?2:0.5)],['夜间',weighted(i=>i<8||i>=22?2:0.5)]];
-      const scenarios=serverReport.pptScenarios;
-      box(0.32,4.18,12.69,2.78); title('24小时充电分布与光储收益',0.52,4.38);
-      text('示例情景：总充电量及其他参数保持不变',0.52,4.68,7,0.18,8,c.muted);
-      const types=priceTypeMatrix(x), monthTypes=types[0];
-      const typeLabels={sharp:'尖峰',peak:'峰',flat:'平',valley:'谷',deepValley:'深谷'};
-      const bandColors={sharp:'D76778',peak:'F39D70',flat:'A6B6CD',valley:'83C9B5',deepValley:'88BFD8'};
-      const activeTypes=['sharp','peak','flat','valley','deepValley'].filter(type=>types.some(month=>month.includes(type)));
-      const periodShares=shares=>activeTypes.map(type=>{
-        const share=types.reduce((sum,month,m)=>sum+month.reduce((v,t,h)=>v+(t===type?shares[h]:0),0)*MONTH_DAYS[m],0)/MONTH_DAYS.reduce((a,b)=>a+b,0);
-        return `${typeLabels[type]} ${num(share*100)}%`;
-      }).join('  ');
-      const gx=.81,gy=5.19,gw=3.85,gh=1.00;
-      const maxShare=Math.max(...scenarios.flatMap(a=>a.shares))*100;
-      const maxY=Math.max(10,Math.ceil(maxShare/5)*5);
-      const line=(x1,y1,x2,y2,color,width=1)=>s.addShape(ppt.ShapeType.line,{x:x1,y:Math.min(y1,y2),w:Math.max(x2-x1,.0001),h:Math.abs(y2-y1),flipV:y2<y1,line:{color,width,beginArrowType:'none',endArrowType:'none'}});
-      let start=0;
-      while(start<24){let end=start+1;while(end<24&&monthTypes[end]===monthTypes[start])end++;const type=monthTypes[start];s.addShape(ppt.ShapeType.rect,{x:gx+start*gw/24,y:gy,w:(end-start)*gw/24,h:gh,line:{transparency:100},fill:{color:bandColors[type]||'A6B6CD',transparency:89}});if(end-start>=2)text(typeLabels[type]||type,gx+start*gw/24,gy-.18,(end-start)*gw/24,.15,7,c.muted,{align:'center'});start=end;}
-      for(let tick=0;tick<=maxY;tick+=5){const yy=gy+gh-tick/maxY*gh;line(gx,yy,gx+gw,yy,'E3E9EF',.4);text(`${tick}%`,gx-.32,yy-.05,.27,.12,6,c.muted,{align:'right'});}
-      // Monotone cubic interpolation preserves hourly values without negative overshoot.
-      const curveColors=[c.orange,c.blue,c.green,'9266B1'];
-      scenarios.forEach((a,index)=>{
-        const v=a.shares.map(n=>n*100), slopes=v.slice(1).map((n,i)=>n-v[i]);
-        const tangent=v.map((_,i)=>i===0?slopes[0]:i===23?slopes[22]:slopes[i-1]*slopes[i]<=0?0:2*slopes[i-1]*slopes[i]/(slopes[i-1]+slopes[i]));
-        let previous=[gx+.5*gw/24,gy+gh-v[0]/maxY*gh];
-        for(let h=0;h<23;h++)for(let step=1;step<=8;step++){
-          const t=step/8,t2=t*t,t3=t2*t;
-          const value=(2*t3-3*t2+1)*v[h]+(t3-2*t2+t)*tangent[h]+(-2*t3+3*t2)*v[h+1]+(t3-t2)*tangent[h+1];
-          const next=[gx+(h+t+.5)*gw/24,gy+gh-value/maxY*gh];line(...previous,...next,curveColors[index],index===0?1.5:1.15);previous=next;
-        }
-      });
-      [0,6,12,18,24].forEach(h=>text(String(h).padStart(2,'0'),gx+h*gw/24-.12,gy+gh+.04,.3,.16,7,c.muted,{align:'center'}));
-      scenarios.forEach((a,i)=>{const xx=gx+i*.98;line(xx,6.53,xx+.17,6.53,curveColors[i],1.5);text(a.name,xx+.21,6.45,.63,.17,8,c.muted);});
-      text('底色：1月电价时段；曲线：各小时占全天电量。',.62,6.73,4.1,.15,7,c.muted);
-      text('情景及各时段负荷占比（全年加权）',5.12,4.96,4.5,.2,9,c.muted,{bold:true});text('光伏',9.65,4.96,.7,.2,9,c.muted,{align:'right'});text('储能',10.5,4.96,.8,.2,9,c.muted,{align:'right'});text('合计',11.6,4.96,1,.2,9,c.muted,{align:'right'});
-      scenarios.forEach((a,i)=>{const yy=5.29+i*.30;s.addShape(ppt.ShapeType.roundRect,{x:5.05,y:yy-.035,w:7.66,h:.27,radius:.03,rectRadius:.03,line:{color:i===0?'FBE4D8':'EDF0F3',width:.4},fill:{color:i===0?'FFF4ED':'F8FAFC'}});text(a.name,5.17,yy,.45,.18,8,c.ink,{bold:true});text(periodShares(a.shares),5.77,yy,3.7,.18,activeTypes.length>3?6.5:8,c.muted);text(num(a.pv),9.65,yy,.7,.18,9,c.ink,{align:'right'});text(num(a.storage),10.5,yy,.8,.18,9,c.ink,{align:'right'});text(num(a.pv+a.storage),11.6,yy,1,.18,9,i===0?c.orange:c.ink,{align:'right',bold:true});});
-      text('金额：万元/年。光伏受白天消纳影响；储能受放电窗口负荷和容量约束。',5.16,6.65,7.4,.25,7,c.muted);
-      text('品牌收入为输入年额，实际计入年份以测算模型为准。',0.34,7.12,12.5,0.16,8,c.muted);
-      await ppt.writeFile({fileName:`场站投资测算看板-${province}.pptx`});
-    } catch(error) { console.error(error); alert(`导出PPT失败：${error.message || error}`); }
-    finally { button.disabled=false; }
-  });
-})();
+// Approved one-page cost and sensitivity layout. Display-only: all results come from the authenticated server report.
+(()=>{const button=document.getElementById('exportPptBtn');button.addEventListener('click',async()=>{button.disabled=true;try{
+if(typeof PptxGenJS==='undefined')throw new Error('PPT组件未加载');if(!serverReport)throw new Error('请先等待测算完成');
+const report=serverReport,r=report.result,x=r.x,y=r.rows[0],n=(v,d=1)=>Number.isFinite(v)?v.toLocaleString('zh-CN',{minimumFractionDigits:d,maximumFractionDigits:d}):'--';
+const province=document.querySelector('select[data-key="province"] option:checked').textContent;
+const ppt=new PptxGenJS();ppt.layout='LAYOUT_WIDE';ppt.author='光储充场站投资测算工具';ppt.title=province+'场站投资测算看板';
+const s=ppt.addSlide();s.background={color:'F3F5F7'};
+const ink='#14263D',muted='#738297',orange='#F3702B';
+let compact=false;
+const color=value=>value.replace('#','');
+function rect(x,y,w,h,fill='#FFFFFF',stroke='#E1E7ED',round=true){if(compact){y=214+(y-214)*.86;h*=.86;}s.addShape(round?ppt.ShapeType.roundRect:ppt.ShapeType.rect,{x:x/120,y:y/120,w:w/120,h:h/120,rectRadius:.04,radius:.04,line:{color:color(stroke),width:.5},fill:{color:color(fill)}});}
+function text(v,x,y,w,h,size=17,fill=ink,bold=false,align='left'){if(compact){y=214+(y-214)*.86;h*=.86;}s.addText(String(v),{x:x/120,y:y/120,w:w/120,h:h/120,fontFace:'Microsoft YaHei',fontSize:size*.75,color:color(fill),bold,align,margin:0,breakLine:false,fit:'shrink',valign:'mid'});}
+function curve(points,fill){for(let j=1;j<points.length;j++){const [x1,y1]=points[j-1],[x2,y2]=points[j];s.addShape(ppt.ShapeType.line,{x:(gx+x1)/120,y:(gy+Math.min(y1,y2))/120,w:Math.max(x2-x1,.0001)/120,h:Math.abs(y2-y1)/120,flipV:y2<y1,line:{color:color(fill),width:1.1,beginArrowType:'none',endArrowType:'none'}});}}
+function rows(items,x,y,w,gap=28,size=16){items.forEach(([a,b,red],i)=>{text(a,x,y+i*gap,w*.45,gap-3,size,red?'#D53434':muted);text(b,x+w*.45,y+i*gap,w*.55,gap-3,size,red?'#D53434':ink,true,'right');});}
+rect(0,0,1600,9,orange,orange,false);text('光储充 · 场站投资测算',38,27,900,45,30,ink,true);text(province+' | '+new Date().toLocaleDateString('zh-CN')+' | 首年口径',1050,37,510,24,16,muted,false,'right');
+const metrics=[['静态回本周期',n(r.payback,2)+' 年'],['首年净现金流',n(y.net)+' 万元'],['总建设成本',n(r.costs.total)+' 万元'],['首年光储增效',n(y.pvGain+y.storageGain)+' 万元'],['品牌年收入',n(x.brandIncome)+' 万元']];
+metrics.forEach(([a,b],i)=>{const xx=38+i*308;rect(xx,92,292,105);if(i===4){
+ text(a,xx+14,105,132,22,13,muted);text(b,xx+14,134,132,31,23,ink,true);
+ text('首年土地成本',xx+150,105,132,22,13,muted);text(n(y.landCost)+' 万元',xx+150,134,132,31,23,ink,true);
+ text('品牌收入覆盖率',xx+18,178,130,16,12,muted);text(y.landCost>0?n(x.brandIncome/y.landCost*100)+'%':'不适用（土地为0）',xx+143,178,130,16,12,y.landCost>0?'#138C70':muted,true,'right');
+}else{text(a,xx+18,105,260,26,17,muted);text(b,xx+18,140,265,38,27,i===0?orange:ink,true);}});
+compact=true;
+rect(38,214,795,435);text('建设成本全项拆解',60,230,560,30,22,ink,true);text('金额：万元',650,236,158,22,14,muted,false,'right');
+const costData=[
+ ['基础设施',n(x.siteArea,0)+' ㎡','',n(r.costs.civil)],
+ ['箱变',n(x.transformerKva,0)+' kVA','450 元/kVA',n(r.costs.transformer)],
+ ['外线工程','按场地配置输入','—',n(r.costs.grid)],
+ ['光伏系统',n(x.pvKw,0)+' kW','1,910 元/kW',n(r.costs.pv)],
+ ['钢结构',n(x.pvArea,0)+' ㎡','566 元/㎡',n(r.costs.steel)],
+ ['储能系统',`${x.batteryUnits}台 × ${x.batteryKwh}kWh`,'680 元/kWh',n(r.costs.battery)],
+ ['充电枪',`${x.fastGuns+x.slowGuns} 把`,'1.9 万元/把',n(r.costs.guns)],
+ ['休息区',n(x.loungeArea,0)+' ㎡','5,500 元/㎡',n(r.costs.lounge)],
+ ['其他成本','按场地配置输入','—',n(r.costs.other)],
+ ['总建设成本','','',n(r.costs.total)]
+];
+const values=[['项目','配置 / 计价基数','投资金额'],...costData.map(([item,base,unit,amount])=>[item,base,amount])];
+s.addTable(values.map((row,ri)=>row.map((value,ci)=>({text:String(value),options:{fill:ri===0?'F3F6F9':ri===10?'FFF2E9':'FFFFFF',color:ri===0?'738297':ri===10?'F3702B':'14263D',bold:ri===0||ri===10||ci===2,align:ci===2?'right':'left',fontSize:ri===10?13.5:12}}))),{x:60/120,y:265/120,w:750/120,colW:[180,355,215].map(v=>v/120),rowH:27.5/120,fontFace:'Microsoft YaHei',fontSize:12,margin:[1,5,1,5],border:{type:'solid',pt:.3,color:'E8EDF2'},autoPage:false});
+rect(850,214,712,240);text('场站配置与市场假设',872,230,610,30,21,ink,true);
+rows([['场地面积 / 首年租金',`${n(x.siteArea,0)} ㎡ / ${n(y.landCost)} 万元`],['变压器 / 光伏',`${n(x.transformerKva,0)} kVA / ${n(x.pvArea,0)} ㎡ · ${x.pvKw} kW`],['储能 / 休息区',`${x.batteryUnits}台 × ${x.batteryKwh}kWh / ${x.loungeArea}㎡`],['单枪电量 / 枪数 / 服务费',`${x.singleGunDailyKwh} kWh / ${x.fastGuns+x.slowGuns}把 / ${n(x.serviceFee,2)}元`,true],['场站日充电量',`${n((x.fastGuns+x.slowGuns)*x.singleGunDailyKwh,0)} kWh`],['场站年充电量',`${n(y.annualLoad/10000,2)} 万kWh`],['车生活年收入',`${n(x.carLifeIncome)} 万元`]],872,270,666,23,15);
+rect(850,470,712,220);text('光储增效与运营成本',872,486,610,30,21,ink,true);
+rows([['光伏年发电 / 日均发电',`${n(y.annualPv/10000,2)} 万kWh / ${n(y.annualPv/365,0)} kWh`],['光伏年增效 / 每度收益',`${n(y.pvGain)} 万元 / ${n(y.pvGain*10000/y.annualLoad,3)} 元`],['储能年转移电量',`${n(y.shiftedKwh/10000,2)} 万kWh`],['储能年增效 / 每度收益',`${n(y.storageGain)} 万元 / ${n(y.storageGain*10000/y.annualLoad,3)} 元`],['年运维成本 / 首年土地成本',`${n(y.ops)} 万元 / ${n(y.landCost)} 万元`]],872,524,666,25,16);
+text('每度收益均按场站全年充电量折算',872,666,660,18,12,muted);
+compact=false;
+rect(38,600,795,248);text('24小时充电比例与光储增效',60,612,600,25,18,ink,true);
+rect(850,642,712,206);text('敏感性分析',872,654,430,25,18,ink,true);
+const gx=92,gy=667,gw=365,gh=100,types=priceTypeMatrix(x)[0];
+for(let h=0;h<24;h++){const col={peak:'#FFF0E5',valley:'#EAF6F1',flat:'#F0F4F8'}[types[h]]||'#F0F4F8';rect(gx+h*gw/24,gy,gw/24,gh,col,col,false);}
+const max=Math.max(...report.pptScenarios.flatMap(a=>a.shares))*1.08,colors=['#F3702B','#397AAB','#16977C','#9266B1'];
+for(let i=0;i<4;i++){const a=report.pptScenarios[i],v=a.shares,slopes=v.slice(1).map((n,j)=>n-v[j]),t=v.map((_,j)=>j===0?slopes[0]:j===23?slopes[22]:slopes[j-1]*slopes[j]<=0?0:2*slopes[j-1]*slopes[j]/(slopes[j-1]+slopes[j]));const pts=[[gw/48,gh-v[0]/max*gh]];for(let h=0;h<23;h++)for(let k=1;k<=6;k++){const z=k/6,z2=z*z,z3=z2*z;const value=(2*z3-3*z2+1)*v[h]+(z3-2*z2+z)*t[h]+(-2*z3+3*z2)*v[h+1]+(z3-z2)*t[h+1];pts.push([(h+z+.5)*gw/24,gh-value/max*gh]);}curve(pts,colors[i]);}
+[0,6,12,18,24].forEach(h=>text(String(h).padStart(2,'0'),gx+h*gw/24-16,768,44,18,10,muted));
+report.pptScenarios.forEach((a,i)=>{text('━ '+a.name,100+(i%2)*160,794+Math.floor(i/2)*22,145,19,13,colors[i]);});
+text('每小时占全天电量 · 底色为1月峰平谷时段',60,639,730,18,11,muted);
+text('情景',490,657,65,22,12,muted);text('光伏',553,657,70,22,12,muted,false,'right');text('储能',634,657,80,22,12,muted,false,'right');text('合计',727,657,80,22,12,muted,false,'right');
+report.pptScenarios.forEach((a,i)=>{const yy=688+i*29;if(i===0)rect(486,yy,326,27,'#FFF2E9','#FFF2E9',false);text(a.name,490,yy,65,24,14,colors[i],true);text(n(a.pv),553,yy,70,24,14,ink,true,'right');text(n(a.storage),634,yy,80,24,14,ink,true,'right');text(n(a.pv+a.storage),727,yy,80,24,14,i===0?orange:ink,true,'right');});
+text('金额：万元/年；总充电量及配置不变',490,813,320,20,11,muted);
+const maxTick=Math.ceil(max*100/5)*5;
+for(const tick of [0,5,10,15])if(tick<max*100)text(tick+'%',44,gy+gh-tick/100/max*gh-8,52,18,10,muted);
+text('变量',872,686,176,19,12,muted);text('变化',1045,686,135,19,12,muted);text('回本年限',1184,686,135,19,12,muted,false,'right');text('首年净现金流',1332,686,204,19,12,muted,false,'right');
+const sensitivityLabels=[['单枪日充电量','−10%'],['单枪日充电量','+10%'],['服务费','−0.10元'],['服务费','+0.10元'],['储能台数','−2台'],['储能台数','+2台'],['峰谷价差','扩大20%'],['土地首年成本','+20万元']];
+report.sensitivity.forEach((a,i)=>{const yy=708+i*16.5;rect(868,yy,672,16.5,i%2?'#FFFFFF':'#F5F7FA','#F5F7FA',false);text(sensitivityLabels[i][0],872,yy,176,16,12,ink);text(sensitivityLabels[i][1],1045,yy,135,16,12,muted);text(a.payback===null?'未回本':n(a.payback,2)+' 年',1184,yy,135,16,12,ink,true,'right');text(n(a.rows[0].net)+' 万元',1332,yy,204,16,12,a.rows[0].net>=y.net?'#138C70':'#B04D42',true,'right');});
+text('品牌收入按第2–7年计入；敏感性分析每次仅改变一个变量。建设成本不含年度租金、运维成本。',42,863,1510,21,13,muted);
+
+await ppt.writeFile({fileName:'场站投资测算看板-'+province+'.pptx'});
+}catch(error){console.error(error);alert('导出PPT失败：'+(error.message||error));}finally{button.disabled=!serverReport;}});})();
