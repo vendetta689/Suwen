@@ -317,11 +317,11 @@
   <div class="scenario-head"><h2 id="scenarioHeading">我的方案库</h2><button type="button" id="scenarioClose" aria-label="关闭方案库">关闭</button></div>
   <div class="scenario-editor"><label>项目名称<input id="scenarioName" maxlength="80" autocomplete="off"></label><button type="button" id="scenarioSave" class="primary-btn">保存当前参数</button><button type="button" id="scenarioCopy">另存为新方案</button></div>
   <p id="scenarioCurrent" class="muted"></p>
-  <div class="scenario-search"><input id="scenarioSearch" type="search" placeholder="搜索项目名称" aria-label="搜索项目名称"><button type="button" id="scenarioReload">刷新</button></div>
+  <div class="scenario-search"><select id="scenarioScope" aria-label="方案范围" hidden><option value="mine">我的方案</option><option value="all">全部账号方案（只读调用）</option></select><select id="scenarioProvince" aria-label="筛选省份"><option value="">全部省份</option></select><input id="scenarioSearch" type="search" placeholder="搜索项目名称或账号" aria-label="搜索项目名称或账号"><button type="button" id="scenarioReload">刷新</button></div>
   <div id="scenarioStatus" role="status" aria-live="polite"></div>
-  <div class="scenario-table"><table><thead><tr><th>项目名称</th><th>省份</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="scenarioRows"></tbody></table></div>
+  <div class="scenario-table"><table><thead><tr><th>项目名称</th><th>所属账号</th><th>省份</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="scenarioRows"></tbody></table></div>
 </dialog>
 
-<script src="scenarios-client.js"></script>
+<script src="scenarios-client.js?v=20261127-admin-library"></script>
 </body>
 </html>
