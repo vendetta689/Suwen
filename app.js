@@ -154,10 +154,10 @@ const PROVINCE_CONFIGS={};
       const profitRows = [["电费收入", first.electricityIncome, "无光储购电量 × 分时电价 / 损耗"], ["实际购电成本", -first.storageCost, "光伏+储能后实际购电成本"], ["服务费收入", first.serviceIncome, "年充电量 × 服务费"], ["品牌收入", first.brand, "按所选省份现金流表年限计入"], ["车生活收入", first.carLife, "按年计入其他经营收入"], ["光伏增效", first.pvGain, "按Excel逐小时光伏后购电成本差额"], ["储能增效", first.storageGain, "按省份逐月时段与两充两放规则模拟"], ["土地成本", -first.landCost, "首年成本，按周期涨幅递增"], ["运维成本", -first.ops, "按年度运维成本输入"], ["设备更换成本", -first.replacementCost, "充电枪5年、储能10年更换"], ["增值税及附加税", -first.tax, "(电费收入 + 服务费收入 - 实际购电成本) / 1.13 × 13% × 1.12"], ["首年净现金流", first.net, "收入 - 电费成本 - 土地 - 运维 - 更换 - 税费"]];
       document.getElementById("profitRows").innerHTML = profitRows.map(([name, value, note]) => `<tr><td>${name}</td><td class="${value >= 0 ? "positive" : "negative"}">${wan(value)}</td><td class="muted">${note}</td></tr>`).join("");
 
-      const storageCycleRate = shiftedKwh => shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency * 365, 1);
+      const storageCycleRate = shiftedKwh => shiftedKwh / Math.max(first.storageCycleKwh * 365, 1);
       document.getElementById("storageCompareRows").innerHTML = [
-        ["省级Excel规则", first.ruleStorageGain, first.ruleShiftedKwh, "按省份逐月时段、两充两放及剩余电量连续计算"],
-        ["自动时段模拟", first.autoStorageGain, first.autoShiftedKwh, "按当前峰谷类型自动识别充放电窗口"]
+        ["统一逐时调度（用于测算）", first.ruleStorageGain, first.ruleShiftedKwh, "连续电量账；谷段优先，平段按峰段缺口补电，受功率及变压器余量约束"],
+        ["旧Excel固定规则（仅对照）", first.autoStorageGain, first.autoShiftedKwh, "保留旧模板固定充放电安排，不计入当前现金流"]
       ].map(([name, gain, shift, note]) => `<tr><td>${name}</td><td>${wan(gain)}</td><td>${fmt(shift / 10000, 1)} 万kWh</td><td>${fmt(storageCycleRate(shift) * 100, 1)}%</td><td class="muted">${note}</td></tr>`).join("");
 
       document.getElementById("energyRows").innerHTML = [["光伏发电量（万kWh）", first.annualPv / 10000, r.rows.reduce((s, y) => s + y.annualPv, 0) / 10000], ["光伏自用电量（万kWh）", first.selfUse / 10000, r.rows.reduce((s, y) => s + y.selfUse, 0) / 10000], ["余电上网（万kWh）", first.exportKwh / 10000, r.rows.reduce((s, y) => s + y.exportKwh, 0) / 10000], ["储能转移电量（万kWh）", first.shiftedKwh / 10000, r.rows.reduce((s, y) => s + y.shiftedKwh, 0) / 10000], ["光伏增效（万元）", first.pvGain, r.pvGainTotal], ["储能增效（万元）", first.storageGain, r.storageGainTotal]].map(([name, y1, total]) => `<tr><td>${name}</td><td>${fmt(y1, 1)}</td><td>${fmt(total, 1)}</td></tr>`).join("");
@@ -168,7 +168,7 @@ const PROVINCE_CONFIGS={};
         ["光伏自用率", first.selfUse / Math.max(first.annualPv, 1), avg(r.rows.map(y => y.selfUse / Math.max(y.annualPv, 1))), "自用光伏电量 / 光伏发电量"],
         ["光伏余电率", first.exportKwh / Math.max(first.annualPv, 1), avg(r.rows.map(y => y.exportKwh / Math.max(y.annualPv, 1))), "余电上网电量 / 光伏发电量"],
         ["储能利用率", first.shiftedKwh / Math.max(first.storagePotentialKwh, 1), avg(r.rows.map(y => y.shiftedKwh / Math.max(y.storagePotentialKwh, 1))), "实际放电替代电量 / 理论可放电量"],
-        ["储能等效循环", first.shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency, 1), avg(r.rows.map(y => y.shiftedKwh / Math.max(r.x.batteryKwh * r.x.batteryUnits * r.x.storageEfficiency, 1))), "按年放电量折算的满充满放次数"]
+        ["储能等效循环", first.shiftedKwh / Math.max(first.storageCycleKwh, 1), avg(r.rows.map(y => y.shiftedKwh / Math.max(y.storageCycleKwh, 1))), "年放电量 / 当年单次可输出电量（含SOC窗口及衰减）"]
       ];
       document.getElementById("utilizationRows").innerHTML = utilizationRows.map(([name, y1, avgValue, note], index) => `<tr><td>${name}</td><td>${index < 3 ? pct(y1) : fmt(y1, 0)}</td><td>${index < 3 ? pct(avgValue) : fmt(avgValue, 0)}</td><td class="muted">${note}</td></tr>`).join("");
 

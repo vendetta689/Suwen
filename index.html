@@ -296,8 +296,8 @@
         <div class="formula">
           <div><span class="pill">省份逻辑</span> 八省分别采用对应测算表的逐月峰平谷时段和默认电价；切换省份会自动带入默认参数，仍可手动覆盖。</div>
           <div><span class="pill">用电曲线</span> 可手动填写24个时段占比并直接参与光伏、储能和购电成本测算；合计不等于100%时自动等比例归一。</div>
-          <div><span class="pill">两充两放优化</span> 自动识别当前省份的连续谷/深谷时段作为充电窗口，后续非谷时段按电价从高到低放电；最多执行两轮，并受储能容量、功率、效率和实际负荷约束。</div>
-          <div><span class="pill">省级Excel规则</span> 按当前省份逐月时段执行两充两放，并连续计算每段充放电后的剩余电量。</div>
+          <div><span class="pill">储能约束</span> 按逐小时电价、负荷和剩余电量测算购电节省，每天不超过两次等效循环；只对有经济价值的需求充电，不强制空转两轮。单台功率按125kW，变压器按功率因数1估算可用余量。</div>
+          <div><span class="pill">统一逐时调度</span> 谷段优先充电，平段按后续峰段缺口补电；余电跨时段保留，受储能功率及变压器余量约束。旧Excel规则仅作对照。</div>
           <div><span class="pill">成本</span> 土地成本按首年成本、上涨周期和上涨比例逐年递增；年度运维成本按一个统一输入值等效应用到各年。</div>
           <div><span class="pill">敏感性</span> 当前展示单枪日充电量、服务费、储能台数、峰谷价差、土地首年成本变化后，对回本周期和首年净现金流的影响。</div>
         </div>
@@ -306,12 +306,13 @@
   </main>
   </div>
 
+  
   <script src="settings.js"></script>
 <script src="legacy-export.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=20261126-unified"></script>
   <script src="pptxgen.bundle.js"></script>
   <script src="ppt-dashboard.js?v=20261125-v6"></script>
-<dialog id="adminEnergyDialog" aria-label="管理员分时电力分析"><div class="energy-toolbar"><strong>管理员 · 分时电力分析</strong><button id="adminEnergyClose" type="button">关闭</button></div><p id="adminEnergyStatus" role="status"></p><iframe id="adminEnergyFrame" title="电价矩阵与电力流向" src="admin-energy.html?v=20261126-cost-only"></iframe></dialog><script src="admin-energy-client.js"></script>
+<dialog id="adminEnergyDialog" aria-label="管理员分时电力分析"><div class="energy-toolbar"><strong>管理员 · 分时电力分析</strong><button id="adminEnergyClose" type="button">关闭</button></div><p id="adminEnergyStatus" role="status"></p><iframe id="adminEnergyFrame" title="电价矩阵与电力流向" src="admin-energy.html?v=20261126-unified"></iframe></dialog><script src="admin-energy-client.js"></script>
 <dialog id="scenarioDialog" aria-labelledby="scenarioHeading">
   <div class="scenario-head"><h2 id="scenarioHeading">我的方案库</h2><button type="button" id="scenarioClose" aria-label="关闭方案库">关闭</button></div>
   <div class="scenario-editor"><label>项目名称<input id="scenarioName" maxlength="80" autocomplete="off"></label><button type="button" id="scenarioSave" class="primary-btn">保存当前参数</button><button type="button" id="scenarioCopy">另存为新方案</button></div>
