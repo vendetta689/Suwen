@@ -57,7 +57,7 @@ const maxTick=Math.ceil(max*100/5)*5;
 for(const tick of [0,5,10,15])if(tick<max*100)text(tick+'%',44,gy+gh-tick/100/max*gh-8,52,18,10,muted);
 text('变量',872,686,176,19,12,muted);text('变化',1045,686,135,19,12,muted);text('回本年限',1184,686,135,19,12,muted,false,'right');text('首年净现金流',1332,686,204,19,12,muted,false,'right');
 const sensitivityLabels=[['单枪日充电量','−10%'],['单枪日充电量','+10%'],['服务费','−0.10元'],['服务费','+0.10元'],['储能台数','−2台'],['储能台数','+2台'],['峰谷价差','扩大20%'],['土地首年成本','+20万元']];
-report.sensitivity.forEach((a,i)=>{const yy=708+i*16.5;rect(868,yy,672,16.5,i%2?'#FFFFFF':'#F5F7FA','#F5F7FA',false);text(sensitivityLabels[i][0],872,yy,176,16,12,ink);text(sensitivityLabels[i][1],1045,yy,135,16,12,muted);text(a.payback===null?'未回本':n(a.payback,2)+' 年',1184,yy,135,16,12,ink,true,'right');text(n(a.rows[0].net)+' 万元',1332,yy,204,16,12,a.rows[0].net>=y.net?'#138C70':'#B04D42',true,'right');});
+report.sensitivity.forEach((a,i)=>{const yy=708+i*16.5;rect(868,yy,672,16.5,i%2?'#FFFFFF':'#F5F7FA','#F5F7FA',false);text(sensitivityLabels[i][0],872,yy,176,16,12,ink);text(sensitivityLabels[i][1],1045,yy,135,16,12,muted);if(!a){text('未测算',1184,yy,135,16,12,muted,false,'right');text('未测算',1332,yy,204,16,12,muted,false,'right');return;}text(a.payback===null?'未回本':n(a.payback,2)+' 年',1184,yy,135,16,12,ink,true,'right');text(n(a.rows[0].net)+' 万元',1332,yy,204,16,12,a.rows[0].net>=y.net?'#138C70':'#B04D42',true,'right');});
 text('品牌收入按第2–7年计入；敏感性分析每次仅改变一个变量。建设成本不含年度租金、运维成本。',42,863,1510,21,13,muted);
 
 await ppt.writeFile({fileName:'场站投资测算看板-'+province+'.pptx'});

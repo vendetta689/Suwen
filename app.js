@@ -94,24 +94,27 @@ const PROVINCE_CONFIGS={};
     }
 
 
-    function renderSensitivity(base) {
-      const scenarios = [
-        ["单枪日充电量", "-10%", { singleGunDailyKwh: base.x.singleGunDailyKwh * 0.9 }],
-        ["单枪日充电量", "+10%", { singleGunDailyKwh: base.x.singleGunDailyKwh * 1.1 }],
-        ["服务费", "-0.10元", { serviceFee: Math.max(base.x.serviceFee - 0.1, 0) }],
-        ["服务费", "+0.10元", { serviceFee: base.x.serviceFee + 0.1 }],
-        ["储能台数", "-2台", { batteryUnits: Math.max(base.x.batteryUnits - 2, 0) }],
-        ["储能台数", "+2台", { batteryUnits: base.x.batteryUnits + 2 }],
-        ["峰谷价差", "扩大20%", { peakPrice: base.x.peakPrice * 1.1, valleyPrice: base.x.valleyPrice * 0.9 }],
-        ["土地首年成本", "+20万", { firstLandCost: base.x.firstLandCost + 20 }]
-      ];
-      document.getElementById("sensitivityRows").innerHTML = scenarios.map(([name, change, patch], index) => {
-        const r = serverReport.sensitivity[index];
-        const y1 = r.rows[0];
-        return `<tr><td>${name}</td><td>${change}</td><td>${r.payback ? fmt(r.payback, 1) + " 年" : "未回本"}</td><td class="${y1.net >= 0 ? "positive" : "negative"}">${wan(y1.net)}</td></tr>`;
-      }).join("");
-    }
-
+const sensitivityLabels=[['单枪日充电量','-10%'],['单枪日充电量','+10%'],['服务费','-0.10元'],['服务费','+0.10元'],['储能台数','-2台'],['储能台数','+2台'],['峰谷价差','扩大20%'],['土地首年成本','+20万']];
+function renderSensitivity(){
+ const root=document.getElementById('sensitivityRows');root.replaceChildren();
+ sensitivityLabels.forEach(([name,change],index)=>{
+  const tr=document.createElement('tr'),result=serverReport?.sensitivity[index];
+  for(const value of [name,change,result?(result.payback?fmt(result.payback,1)+' 年':'未回本'):'未测算',result?wan(result.rows[0].net):'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+  const cell=tr.lastChild,button=document.createElement('button');button.type='button';button.textContent=result?'重新测算':'测算此项';button.title=name+' '+change;button.style.marginLeft='8px';
+  button.addEventListener('click',async()=>{
+   const report=serverReport,revision=requestNumber;if(!report)return;
+   root.querySelectorAll('button').forEach(b=>b.disabled=true);button.textContent='计算中…';
+   try{
+    const input=Object.fromEntries(Object.entries(report.result.x).filter(([key])=>key==='province'||document.querySelector(`[data-key="${key}"]`)));
+    const r=await api('calculate-sensitivity',{input,index});
+    if(serverReport!==report||revision!==requestNumber)return;
+    report.sensitivity[index]=r;renderSensitivity();
+   }catch(error){if(serverReport===report){button.textContent='重试';button.title=error.message;status('敏感性测算失败：'+error.message);}}
+   finally{if(serverReport===report)root.querySelectorAll('button').forEach(b=>b.disabled=false);}
+  });
+  cell.append(button);root.append(tr);
+ });
+}
 
     function paintReport() {
       updateHourShareStatus();
@@ -197,7 +200,7 @@ async function api(route,body={},authenticated=true,retry=true){
   if(response.status===401&&authenticated&&retry&&session?.refresh_token){
     try{saveSession(await api('refresh',{refresh_token:session.refresh_token},false,false));return await api(route,body,true,false);}catch(error){localLogout();throw error;}
   }
-  if(!response.ok){if(authenticated&&(response.status===401||response.status===403))localLogout();throw new Error(data.error||'请求失败');}
+  if(!response.ok){if(authenticated&&(response.status===401||response.status===403))localLogout();throw new Error(response.status===546?'计算触及服务器运行限制，请稍后重试或联系管理员':data.error||data.message||`请求失败（${response.status}）`);}
   return data;
 }
 function setAuthVisible(visible){
